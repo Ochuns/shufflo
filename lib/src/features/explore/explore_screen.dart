@@ -14,7 +14,7 @@ class ExploreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final publicCards = ref.watch(cardsProvider).where((c) => c.isPublic).toList();
+    final cardsAsync = ref.watch(cardsProvider);
 
     return Scaffold(
       body: Stack(
@@ -89,19 +89,28 @@ class ExploreScreen extends ConsumerWidget {
             right: 0,
             child: SizedBox(
               height: 160,
-              child: PageView.builder(
-                controller: PageController(viewportFraction: 0.85),
-                itemCount: publicCards.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: ExperienceCard(
-                      model: publicCards[index],
-                      isCompact: true,
-                      onTap: () {
-                        // TODO: Open Card Popup Detail
-                      },
-                    ),
+              child: cardsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Center(child: Text('Error: \$error', style: const TextStyle(color: Colors.red))),
+                data: (cards) {
+                  final publicCards = cards.where((c) => c.isPublic).toList();
+                  if (publicCards.isEmpty) return const SizedBox.shrink();
+
+                  return PageView.builder(
+                    controller: PageController(viewportFraction: 0.85),
+                    itemCount: publicCards.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: ExperienceCard(
+                          model: publicCards[index],
+                          isCompact: true,
+                          onTap: () {
+                            // TODO: Open Card Popup Detail
+                          },
+                        ),
+                      );
+                    },
                   );
                 },
               ),

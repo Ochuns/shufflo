@@ -1,18 +1,42 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'experience_card_model.dart';
-import 'mock_data.dart';
+import 'supabase_repository.dart';
 
-class CardsNotifier extends Notifier<List<ExperienceCardModel>> {
+class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
   @override
-  List<ExperienceCardModel> build() {
-    return initialMockCards;
+  Future<List<ExperienceCardModel>> build() async {
+    final repo = ref.watch(supabaseRepositoryProvider);
+    return await repo.fetchAllCards();
   }
 
-  void addCard(ExperienceCardModel card) {
-    state = [...state, card];
+  Future<void> submitPost({
+    required String title,
+    required ExperienceCategory category,
+    required double rating,
+    required String publicComment,
+    required String privateComment,
+    String? publicImagePath,
+    String? privateImagePath,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final repo = ref.read(supabaseRepositoryProvider);
+    await repo.submitPost(
+      title: title,
+      category: category,
+      rating: rating,
+      publicComment: publicComment,
+      privateComment: privateComment,
+      publicImagePath: publicImagePath,
+      privateImagePath: privateImagePath,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    ref.invalidateSelf();
+    await future;
   }
 }
 
-final cardsProvider = NotifierProvider<CardsNotifier, List<ExperienceCardModel>>(() {
+final cardsProvider = AsyncNotifierProvider<CardsNotifier, List<ExperienceCardModel>>(() {
   return CardsNotifier();
 });
