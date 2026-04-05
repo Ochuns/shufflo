@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../models/mock_data.dart';
@@ -24,8 +25,8 @@ class ExploreScreen extends StatelessWidget {
             children: [
               TileLayer(
                 urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token={accessToken}',
-                additionalOptions: const {
-                  'accessToken': dotenv.env['MAPBOX_TOKEN']!, // Mapbox API Key
+                additionalOptions: {
+                  'accessToken': dotenv.env['MAPBOX_TOKEN'] ?? '', // Mapbox API Key
                 },
               ),
               MarkerLayer(
