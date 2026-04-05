@@ -34,7 +34,8 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, requestFullMetadata: true);
     if (image != null) {
       if (isPublic) {
-        final loc = await ExifUtils.getLocationFromImage(image.path);
+        final bytes = await image.readAsBytes();
+        final loc = await ExifUtils.getLocationFromImage(bytes);
         setState(() {
           _publicImagePath = image.path;
           _latitude = loc?['latitude'];
