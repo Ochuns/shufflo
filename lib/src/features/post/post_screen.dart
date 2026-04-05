@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/cards_provider.dart';
+import '../../models/experience_card_model.dart';
 import 'package:go_router/go_router.dart';
 
 class PostScreen extends ConsumerStatefulWidget {
