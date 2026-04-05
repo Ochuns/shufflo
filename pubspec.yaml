@@ -44,6 +44,9 @@ dependencies:
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   flutter_dotenv: ^6.0.0
+  supabase_flutter: ^2.12.2
+  exif: ^3.3.0
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

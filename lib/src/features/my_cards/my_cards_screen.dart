@@ -9,7 +9,7 @@ class MyCardsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // ユーザー(自分)が作成した全カード（Public + Private両方）を表示
-    final myCards = ref.watch(cardsProvider).toList();
+    final myCardsAsync = ref.watch(cardsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -32,19 +32,28 @@ class MyCardsScreen extends ConsumerWidget {
               child: TabBarView(
                 children: [
                   // Tab 1: Cards Grid
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.75, // トレーディングカード風の縦長比率
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: myCards.length,
-                    itemBuilder: (context, index) {
-                      return ExperienceCard(
-                        model: myCards[index],
-                        isCompact: true,
+                  myCardsAsync.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, st) => Center(child: Text('Error: \$e', style: const TextStyle(color: Colors.red))),
+                    data: (myCards) {
+                      if (myCards.isEmpty) {
+                        return const Center(child: Text('No cards crafted yet.', style: TextStyle(color: Colors.grey)));
+                      }
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.75, // トレーディングカード風の縦長比率
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
+                        itemCount: myCards.length,
+                        itemBuilder: (context, index) {
+                          return ExperienceCard(
+                            model: myCards[index],
+                            isCompact: true,
+                          );
+                        },
                       );
                     },
                   ),
