@@ -91,7 +91,7 @@ class ExploreScreen extends ConsumerWidget {
               height: 160,
               child: cardsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: \$error', style: const TextStyle(color: Colors.red))),
+                error: (error, stack) => Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
                 data: (cards) {
                   final publicCards = cards.where((c) => c.isPublic).toList();
                   if (publicCards.isEmpty) return const SizedBox.shrink();
