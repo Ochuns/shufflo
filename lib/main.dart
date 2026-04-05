@@ -21,7 +21,7 @@ void main() async {
     try {
       await supabase.auth.signInAnonymously();
     } catch (e) {
-      debugPrint('Anonymous Login failed: \$e');
+      debugPrint('Anonymous Login failed: $e');
     }
   }
 
