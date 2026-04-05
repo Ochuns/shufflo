@@ -1,15 +1,11 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:exif/exif.dart';
 
 class ExifUtils {
-  /// 画像ファイルからGPS情報を抽出し、緯度・経度のマップを返す
+  /// 画像バイト列からGPS情報を抽出し、緯度・経度のマップを返す
   /// 抽出できなかった場合は null を返す
-  static Future<Map<String, double>?> getLocationFromImage(String path) async {
+  static Future<Map<String, double>?> getLocationFromImage(Uint8List bytes) async {
     try {
-      final file = File(path);
-      if (!await file.exists()) return null;
-
-      final bytes = await file.readAsBytes();
       final tags = await readExifFromBytes(bytes);
 
       if (tags.containsKey('GPS GPSLatitude') && tags.containsKey('GPS GPSLongitude')) {
