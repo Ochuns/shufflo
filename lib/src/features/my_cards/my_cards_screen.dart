@@ -86,7 +86,7 @@ class MyCardsScreen extends ConsumerWidget {
           child: Icon(Icons.layers, color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('\$date • \$cardCount cards'),
+        subtitle: Text('$date • $cardCount cards'),
         trailing: const Icon(Icons.chevron_right),
       ),
     );
