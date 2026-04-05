@@ -1,6 +1,6 @@
 import 'experience_card_model.dart';
 
-final List<ExperienceCardModel> mockCards = [
+final List<ExperienceCardModel> initialMockCards = [
   const ExperienceCardModel(
     id: '1',
     title: 'Blue Bottle Coffee',
@@ -8,11 +8,12 @@ final List<ExperienceCardModel> mockCards = [
     rating: 4.5,
     category: ExperienceCategory.cafe,
     comment: 'Great atmosphere, perfect for a short break.',
-    authorName: 'Alex',
-    authorAvatarUrl: 'https://i.pravatar.cc/150?u=alex',
+    authorName: 'Creative Editor',
+    authorAvatarUrl: 'https://i.pravatar.cc/300',
     duration: '1h',
     priceRange: '\$\$',
     tags: ['Relaxing', 'Good Coffee'],
+    isPublic: true,
   ),
   const ExperienceCardModel(
     id: '2',
@@ -21,11 +22,12 @@ final List<ExperienceCardModel> mockCards = [
     rating: 4.8,
     category: ExperienceCategory.sightseeing,
     comment: 'Beautiful gardens and historic buildings.',
-    authorName: 'Yumi',
-    authorAvatarUrl: 'https://i.pravatar.cc/150?u=yumi',
+    authorName: 'Creative Editor',
+    authorAvatarUrl: 'https://i.pravatar.cc/300',
     duration: '2-3h',
     priceRange: 'Free',
     tags: ['Historic', 'Photo Spot'],
+    isPublic: true,
   ),
   const ExperienceCardModel(
     id: '3',
@@ -34,23 +36,11 @@ final List<ExperienceCardModel> mockCards = [
     rating: 4.2,
     category: ExperienceCategory.restaurant,
     comment: 'Fresh sushi at a reasonable price.',
-    authorName: 'Ken',
-    authorAvatarUrl: 'https://i.pravatar.cc/150?u=ken',
+    authorName: 'Creative Editor',
+    authorAvatarUrl: 'https://i.pravatar.cc/300',
     duration: '1.5h',
     priceRange: '\$\$\$',
     tags: ['Dinner', 'Seafood'],
-  ),
-  const ExperienceCardModel(
-    id: '4',
-    title: 'Joypolis',
-    imageUrl: 'https://images.unsplash.com/photo-1511882150382-421056c89033?w=600&q=80&fit=crop',
-    rating: 4.4,
-    category: ExperienceCategory.amusement,
-    comment: 'Fun indoor rides, perfect for dates!',
-    authorName: 'Sora',
-    authorAvatarUrl: 'https://i.pravatar.cc/150?u=sora',
-    duration: '3h',
-    priceRange: '\$\$\$',
-    tags: ['Indoor', 'Date'],
+    isPublic: false, // Private Card example
   ),
 ];
