@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../models/mock_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/cards_provider.dart';
 import '../../common_widgets/experience_card.dart';
 
-class MyCardsScreen extends StatelessWidget {
+class MyCardsScreen extends ConsumerWidget {
   const MyCardsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ユーザー(自分)が作成した全カード（Public + Private両方）を表示
+    final myCards = ref.watch(cardsProvider).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Decks & Cards', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -36,10 +40,10 @@ class MyCardsScreen extends StatelessWidget {
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
-                    itemCount: mockCards.length,
+                    itemCount: myCards.length,
                     itemBuilder: (context, index) {
                       return ExperienceCard(
-                        model: mockCards[index],
+                        model: myCards[index],
                         isCompact: true,
                       );
                     },

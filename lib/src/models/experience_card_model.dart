@@ -52,6 +52,8 @@ class ExperienceCardModel {
   final String duration;
   final String priceRange;
   final List<String> tags; // e.g. ["初デート向き", "夜景"]
+  final bool isPublic;
+  final String? localImagePath;
 
   const ExperienceCardModel({
     required this.id,
@@ -65,5 +67,7 @@ class ExperienceCardModel {
     this.duration = '1-2h',
     this.priceRange = '\$\$',
     this.tags = const [],
+    this.isPublic = true,
+    this.localImagePath,
   });
 }

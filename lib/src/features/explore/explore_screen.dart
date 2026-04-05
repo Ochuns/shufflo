@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../models/mock_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/cards_provider.dart';
 import '../../common_widgets/experience_card.dart';
 import '../../models/experience_card_model.dart';
 // ignore: unused_import
 import 'package:go_router/go_router.dart';
 
-class ExploreScreen extends StatelessWidget {
+class ExploreScreen extends ConsumerWidget {
   const ExploreScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final publicCards = ref.watch(cardsProvider).where((c) => c.isPublic).toList();
+
     return Scaffold(
       body: Stack(
         children: [
@@ -88,12 +91,12 @@ class ExploreScreen extends StatelessWidget {
               height: 160,
               child: PageView.builder(
                 controller: PageController(viewportFraction: 0.85),
-                itemCount: mockCards.length,
+                itemCount: publicCards.length,
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: ExperienceCard(
-                      model: mockCards[index],
+                      model: publicCards[index],
                       isCompact: true,
                       onTap: () {
                         // TODO: Open Card Popup Detail

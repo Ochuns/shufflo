@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/experience_card_model.dart';
@@ -32,12 +33,19 @@ class ExperienceCard extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: model.imageUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(color: Colors.grey.shade200),
-                        errorWidget: (context, url, error) => Container(color: Colors.grey.shade300, child: const Icon(Icons.error)),
-                      ),
+                      if (model.localImagePath != null)
+                        Image.file(
+                          File(model.localImagePath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade300, child: const Icon(Icons.error)),
+                        )
+                      else
+                        CachedNetworkImage(
+                          imageUrl: model.imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey.shade200),
+                          errorWidget: (context, url, error) => Container(color: Colors.grey.shade300, child: const Icon(Icons.error)),
+                        ),
                       Positioned(
                         top: 12,
                         left: 12,
