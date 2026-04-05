@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/cards_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/experience_card_model.dart';
+import '../../models/cards_provider.dart';
+import '../../utils/exif_utils.dart';
 import 'package:go_router/go_router.dart';
 
 class PostScreen extends ConsumerStatefulWidget {
@@ -26,70 +27,73 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
+  double? _latitude;
+  double? _longitude;
+
   Future<void> _pickImage(bool isPublic) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, requestFullMetadata: true);
     if (image != null) {
-      setState(() {
-        if (isPublic) {
+      if (isPublic) {
+        final bytes = await image.readAsBytes();
+        final loc = await ExifUtils.getLocationFromImage(bytes);
+        setState(() {
           _publicImagePath = image.path;
-        } else {
+          _latitude = loc?['latitude'];
+          _longitude = loc?['longitude'];
+        });
+      } else {
+        setState(() {
           _privateImagePath = image.path;
-        }
-      });
+        });
+      }
     }
   }
 
-  void _submitCard() {
+  bool _isLoading = false;
+
+  Future<void> _submitCard() async {
     if (_titleController.text.isEmpty || _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill out the title and category.')));
       return;
     }
 
-    final now = DateTime.now().millisecondsSinceEpoch.toString();
+    setState(() => _isLoading = true);
 
-    // Create Public Card
-    final publicCard = ExperienceCardModel(
-      id: "pub_\$now",
-      title: _titleController.text,
-      imageUrl: _publicImagePath != null ? '' : 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c', // fallback
-      localImagePath: _publicImagePath,
-      rating: _rating,
-      category: _selectedCategory!,
-      comment: _publicCommentController.text.isNotEmpty ? _publicCommentController.text : 'No comment.',
-      authorName: 'Creative Editor',
-      authorAvatarUrl: 'https://i.pravatar.cc/300',
-      isPublic: true,
-    );
+    try {
+      await ref.read(cardsProvider.notifier).submitPost(
+        title: _titleController.text,
+        category: _selectedCategory!,
+        rating: _rating,
+        publicComment: _publicCommentController.text.isNotEmpty ? _publicCommentController.text : 'No comment.',
+        privateComment: _privateCommentController.text.isNotEmpty ? _privateCommentController.text : 'No comment.',
+        publicImagePath: _publicImagePath,
+        privateImagePath: _privateImagePath,
+        latitude: _latitude,
+        longitude: _longitude,
+      );
 
-    // Create Private Card
-    final privateCard = ExperienceCardModel(
-      id: "priv_\$now",
-      title: _titleController.text,
-      imageUrl: _privateImagePath != null ? '' : 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e', // fallback
-      localImagePath: _privateImagePath,
-      rating: _rating,
-      category: _selectedCategory!,
-      comment: _privateCommentController.text.isNotEmpty ? _privateCommentController.text : 'No comment.',
-      authorName: 'Creative Editor',
-      authorAvatarUrl: 'https://i.pravatar.cc/300',
-      isPublic: false,
-    );
-
-    final cardsNotifier = ref.read(cardsProvider.notifier);
-    cardsNotifier.state = [...cardsNotifier.state, publicCard, privateCard];
-
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cards created successfully!')));
-    
-    // Reset Form
-    setState(() {
-      _titleController.clear();
-      _publicCommentController.clear();
-      _privateCommentController.clear();
-      _selectedCategory = null;
-      _rating = 3.0;
-      _publicImagePath = null;
-      _privateImagePath = null;
-    });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cards created successfully!')));
+      
+      // Reset Form
+      setState(() {
+        _titleController.clear();
+        _publicCommentController.clear();
+        _privateCommentController.clear();
+        _selectedCategory = null;
+        _rating = 3.0;
+        _publicImagePath = null;
+        _privateImagePath = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ' + e.toString())));
+      debugPrint('Submit Error: ' + e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Widget _buildImageUploader(String label, String? imagePath, bool isPublic) {
@@ -121,6 +125,28 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                 : null,
           ),
         ),
+        if (isPublic && imagePath != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                _latitude != null ? Icons.location_on : Icons.location_off,
+                size: 16,
+                color: _latitude != null ? Colors.green : Colors.grey,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _latitude != null 
+                  ? '📍 位置情報を写真から取得しました' 
+                  : '⚠️ 写真に位置情報が見つかりません',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _latitude != null ? Colors.green.shade700 : Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -198,10 +224,12 @@ class _PostScreenState extends ConsumerState<PostScreen> {
             ),
             const SizedBox(height: 32),
             
-            ElevatedButton(
-              onPressed: _submitCard,
-              child: const Text('Create Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
+            _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _submitCard,
+                    child: const Text('Create Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
             const SizedBox(height: 48),
           ],
         ),
