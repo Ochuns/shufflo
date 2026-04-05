@@ -5,7 +5,7 @@ import 'mock_data.dart';
 class CardsNotifier extends Notifier<List<ExperienceCardModel>> {
   @override
   List<ExperienceCardModel> build() {
-    return initialMockCards;
+    return [...initialMockCards];
   }
 
   void addCard(ExperienceCardModel card) {

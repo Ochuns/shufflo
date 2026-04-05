@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -75,8 +74,8 @@ class _PostScreenState extends ConsumerState<PostScreen> {
       isPublic: false,
     );
 
-    ref.read(cardsProvider.notifier).addCard(publicCard);
-    ref.read(cardsProvider.notifier).addCard(privateCard);
+    final cardsNotifier = ref.read(cardsProvider.notifier);
+    cardsNotifier.state = [...cardsNotifier.state, publicCard, privateCard];
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cards created successfully!')));
     
