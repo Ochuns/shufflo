@@ -6,14 +6,53 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cards_provider.dart';
 import '../../common_widgets/experience_card.dart';
 import '../../models/experience_card_model.dart';
-// ignore: unused_import
+import 'location_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class ExploreScreen extends ConsumerWidget {
+class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+  final MapController _mapController = MapController();
+  bool _isLoadingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // アプリ起動時（マップ画面表示時）に現在地へ自動移動
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _goToCurrentLocation(isInitial: true);
+    });
+  }
+
+  Future<void> _goToCurrentLocation({bool isInitial = false}) async {
+    if (_isLoadingLocation) return;
+    setState(() => _isLoadingLocation = true);
+
+    final locService = ref.read(locationProvider);
+    final loc = await locService.getCurrentLocation();
+
+    if (!mounted) return;
+
+    setState(() => _isLoadingLocation = false);
+
+    if (loc != null) {
+      _mapController.move(loc, 16.5); // 地図の縮尺
+    } else {
+      if (!isInitial) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('位置情報が許可されていません。設定をご確認ください。')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cardsAsync = ref.watch(cardsProvider);
 
     return Scaffold(
@@ -21,9 +60,10 @@ class ExploreScreen extends ConsumerWidget {
         children: [
           // 1. Full-screen map (flutter_map using Mapbox tiles)
           FlutterMap(
+            mapController: _mapController,
             options: MapOptions(
-              initialCenter: LatLng(35.6812, 139.7671), // Tokyo
-              initialZoom: 14.0,
+              initialCenter: LatLng(35.6812, 139.7671), // 初期位置：東京（位置情報待ち）
+              initialZoom: 13.0,
             ),
             children: [
               TileLayer(
@@ -34,11 +74,12 @@ class ExploreScreen extends ConsumerWidget {
               ),
               MarkerLayer(
                 markers: [
+                  // 仮の初期マーカー
                   Marker(
                     point: LatLng(35.6812, 139.7671),
                     width: 40,
                     height: 40,
-                    child: Icon(Icons.location_on, color: Color(0xFFFF6B6B), size: 40),
+                    child: const Icon(Icons.location_on, color: Color(0xFFFF6B6B), size: 40),
                   ),
                 ],
               ),
@@ -81,8 +122,22 @@ class ExploreScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // 3. Current Location Button (Floating)
+          Positioned(
+            bottom: 200, // Bottom Sheet の少し上に配置
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: 'location_fab',
+              backgroundColor: Colors.white,
+              onPressed: () => _goToCurrentLocation(),
+              child: _isLoadingLocation 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.my_location, color: Colors.blueAccent),
+            ),
+          ),
           
-          // 3. Bottom Sheet Preview (Floating Cards)
+          // 4. Bottom Sheet Preview (Floating Cards)
           Positioned(
             bottom: 24,
             left: 0,
