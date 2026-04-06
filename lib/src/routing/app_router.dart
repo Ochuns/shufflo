@@ -75,8 +75,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra;
           if (extra is! ExperienceCardModel) {
             return const NoTransitionPage(
-              child: Scaffold(
-                body: Center(child: Text('Unable to open card details.')),
+              child: const Scaffold(
+                body: const Center(
+                  child: Text('Unable to open card details.'),
+                ),
               ),
             );
           }
