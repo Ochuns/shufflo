@@ -186,15 +186,45 @@ class TcgCardView extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
-                      child: Hero(
-                        tag: 'card_image_${model.id}',
-                        child: model.localImagePath != null
-                            ? Image.file(File(model.localImagePath!), fit: BoxFit.cover)
-                            : CachedNetworkImage(
-                                imageUrl: model.imageUrl,
-                                fit: BoxFit.cover,
+                      child: model.localImagePath != null
+                          ? Image.file(
+                              File(model.localImagePath!),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey.shade900,
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Colors.white54,
+                                  size: isCompact ? 28 : 40,
+                                ),
                               ),
-                      ),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: model.imageUrl,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey.shade900,
+                                alignment: Alignment.center,
+                                child: SizedBox(
+                                  width: isCompact ? 18 : 24,
+                                  height: isCompact ? 18 : 24,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey.shade900,
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Colors.white54,
+                                  size: isCompact ? 28 : 40,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -259,13 +289,17 @@ class TcgCardView extends StatelessWidget {
                           backgroundImage: CachedNetworkImageProvider(model.authorAvatarUrl),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          'Illus. ${model.authorName}',
-                          style: const TextStyle(color: Colors.white54, fontSize: 9, fontStyle: FontStyle.italic),
+                        Flexible(
+                          child: Text(
+                            'Illus. ${model.authorName}',
+                            style: const TextStyle(color: Colors.white54, fontSize: 9, fontStyle: FontStyle.italic),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Text(
-                          "ID: ${model.id.padLeft(4, '0')}  ©Shufflo",
+                          "ID: ${model.id.length > 8 ? model.id.substring(0, 8) : model.id.padLeft(4, '0')}  ©Shufflo",
                           style: const TextStyle(color: Colors.white38, fontSize: 8),
                         ),
                       ],
