@@ -15,6 +15,7 @@ final List<ExperienceCardModel> initialMockCards = [
     priceRange: '\$\$',
     tags: ['Relaxing', 'Good Coffee'],
     isPublic: true,
+    rarity: CardRarity.common,
   ),
   const ExperienceCardModel(
     id: '2',
@@ -29,6 +30,7 @@ final List<ExperienceCardModel> initialMockCards = [
     priceRange: 'Free',
     tags: ['Historic', 'Photo Spot'],
     isPublic: true,
+    rarity: CardRarity.legendary,
   ),
   const ExperienceCardModel(
     id: '3',
@@ -43,6 +45,7 @@ final List<ExperienceCardModel> initialMockCards = [
     priceRange: '\$\$\$',
     tags: ['Dinner', 'Seafood'],
     isPublic: false, // Private Card example
+    rarity: CardRarity.rare,
   ),
 ];
 

@@ -8,6 +8,13 @@ enum ExperienceCategory {
   other,
 }
 
+enum CardRarity {
+  common,
+  rare,
+  epic,
+  legendary,
+}
+
 extension ExperienceCategoryExtension on ExperienceCategory {
   String get label {
     switch (this) {
@@ -54,6 +61,7 @@ class ExperienceCardModel {
   final List<String> tags; // e.g. ["初デート向き", "夜景"]
   final bool isPublic;
   final String? localImagePath;
+  final CardRarity rarity;
 
   const ExperienceCardModel({
     required this.id,
@@ -69,5 +77,6 @@ class ExperienceCardModel {
     this.tags = const [],
     this.isPublic = true,
     this.localImagePath,
+    this.rarity = CardRarity.common,
   });
 }
