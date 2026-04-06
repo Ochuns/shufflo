@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'scaffold_with_nav_bar.dart';
+import '../models/experience_card_model.dart';
+import '../models/deck_model.dart';
 
-// Placeholder screens
+// Screens
 import '../features/explore/explore_screen.dart';
+import '../features/explore/card_detail_screen.dart';
 import '../features/my_cards/my_cards_screen.dart';
+import '../features/my_cards/deck_playback_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/post/post_screen.dart';
 
@@ -62,6 +66,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      // Top Level Routes (Full Screen)
+      GoRoute(
+        path: '/card_detail',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final model = state.extra as ExperienceCardModel;
+          return CardDetailScreen(model: model);
+        },
+      ),
+      GoRoute(
+        path: '/deck_playback',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final deck = state.extra as DeckModel;
+          return DeckPlaybackScreen(deck: deck);
+        },
       ),
     ],
   );

@@ -1,4 +1,5 @@
 import 'experience_card_model.dart';
+import 'deck_model.dart';
 
 final List<ExperienceCardModel> initialMockCards = [
   const ExperienceCardModel(
@@ -44,3 +45,11 @@ final List<ExperienceCardModel> initialMockCards = [
     isPublic: false, // Private Card example
   ),
 ];
+
+final DeckModel mockDemoDeck = DeckModel(
+  id: 'd1',
+  title: 'Kyoto Trip',
+  date: DateTime.now(),
+  cards: initialMockCards,
+  location: 'Kyoto, Japan',
+);

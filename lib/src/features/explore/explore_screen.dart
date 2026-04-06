@@ -106,7 +106,7 @@ class ExploreScreen extends ConsumerWidget {
                           model: publicCards[index],
                           isCompact: true,
                           onTap: () {
-                            // TODO: Open Card Popup Detail
+                            context.push('/card_detail', extra: publicCards[index]);
                           },
                         ),
                       );
