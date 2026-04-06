@@ -72,16 +72,32 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/card_detail',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final model = state.extra as ExperienceCardModel;
-          return CardDetailScreen(model: model);
+          final extra = state.extra;
+          if (extra is! ExperienceCardModel) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Invalid route')),
+              body: const Center(
+                child: Text('Unable to open card details.'),
+              ),
+            );
+          }
+          return CardDetailScreen(model: extra);
         },
       ),
       GoRoute(
         path: '/deck_playback',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final deck = state.extra as DeckModel;
-          return DeckPlaybackScreen(deck: deck);
+          final extra = state.extra;
+          if (extra is! DeckModel) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Invalid route')),
+              body: const Center(
+                child: Text('Unable to open deck playback.'),
+              ),
+            );
+          }
+          return DeckPlaybackScreen(deck: extra);
         },
       ),
     ],
