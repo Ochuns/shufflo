@@ -33,7 +33,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
           ),
           NavigationDestination(
             icon: Icon(LucideIcons.layers),
-            label: 'My Decks',
+            label: 'Collection',
           ),
           NavigationDestination(
             icon: Icon(LucideIcons.user),

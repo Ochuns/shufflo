@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cards_provider.dart';
 import '../../common_widgets/experience_card.dart';
+import 'package:go_router/go_router.dart';
+import '../../models/mock_data.dart';
 
 class MyCardsScreen extends ConsumerWidget {
   const MyCardsScreen({super.key});
@@ -52,6 +54,7 @@ class MyCardsScreen extends ConsumerWidget {
                           return ExperienceCard(
                             model: myCards[index],
                             isCompact: true,
+                            onTap: () => context.push('/card_detail', extra: myCards[index]),
                           );
                         },
                       );
@@ -88,6 +91,9 @@ class MyCardsScreen extends ConsumerWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text('$date • $cardCount cards'),
         trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          context.push('/deck_playback', extra: mockDemoDeck);
+        },
       ),
     );
   }
