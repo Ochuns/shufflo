@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../models/cards_provider.dart';
-import '../../common_widgets/experience_card.dart';
+import '../../common_widgets/tcg_card_view.dart';
+import '../../models/experience_card_model.dart';
 import '../../models/mock_data.dart';
 
 class MyCardsScreen extends ConsumerStatefulWidget {
@@ -58,12 +59,11 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                           return isSameDay(_selectedDay, day);
                         },
                         onDaySelected: (selectedDay, focusedDay) {
-                          if (!isSameDay(_selectedDay, selectedDay)) {
-                            setState(() {
-                              _selectedDay = selectedDay;
-                              _focusedDay = focusedDay;
-                            });
-                          }
+                          // UTCの差分を吸収するためローカル時刻に明示的に変換して保存
+                          setState(() {
+                            _selectedDay = selectedDay.toLocal();
+                            _focusedDay = focusedDay.toLocal();
+                          });
                         },
                         headerStyle: const HeaderStyle(
                           titleCentered: true,
@@ -87,18 +87,26 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                           loading: () => const Center(child: CircularProgressIndicator()),
                           error: (e, st) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
                           data: (myCards) {
-                            final filteredCards = myCards.where((card) {
-                              if (card.createdAt == null) return false;
-                              return isSameDay(card.createdAt, _selectedDay);
+                            // 1. プライベート（非公開）カードのみに絞り込む
+                            final privateCards = myCards.where((c) => !c.isPublic).toList();
+
+                            // 2. 選択された日付と一致するものに絞り込む（年・月・日のマニュアル比較で確実性を高める）
+                            final filteredCards = privateCards.where((card) {
+                              if (card.createdAt == null || _selectedDay == null) return false;
+                              final date = card.createdAt!.toLocal();
+                              final target = _selectedDay!.toLocal();
+                              return date.year == target.year && 
+                                     date.month == target.month && 
+                                     date.day == target.day;
                             }).toList();
 
-                            if (myCards.isEmpty) {
-                              return const Center(child: Text('No cards crafted yet.', style: TextStyle(color: Colors.grey)));
+                            if (privateCards.isEmpty) {
+                              return const Center(child: Text('No private cards yet.', style: TextStyle(color: Colors.grey)));
                             }
                             if (filteredCards.isEmpty) {
                               return Center(
                                 child: Text(
-                                  'No cards created on \${_selectedDay?.month}/\${_selectedDay?.day}.', 
+                                  'No cards created on ${_selectedDay?.month}/${_selectedDay?.day}.', 
                                   style: const TextStyle(color: Colors.grey)
                                 )
                               );
@@ -107,16 +115,16 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                               padding: const EdgeInsets.all(16),
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                childAspectRatio: 0.75, // トレーディングカード風の縦長比率
+                                childAspectRatio: 0.65, // TCGカードのアスペクト比に合わせる
                                 crossAxisSpacing: 16,
                                 mainAxisSpacing: 16,
                               ),
                               itemCount: filteredCards.length,
                               itemBuilder: (context, index) {
-                                return ExperienceCard(
-                                  model: filteredCards[index],
-                                  isCompact: true,
+                                // ここを TcgCardView に変更
+                                return GestureDetector(
                                   onTap: () => context.push('/card_detail', extra: filteredCards[index]),
+                                  child: TcgCardView(model: filteredCards[index], isCompact: true),
                                 );
                               },
                             );
