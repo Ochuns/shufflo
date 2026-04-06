@@ -186,15 +186,12 @@ class TcgCardView extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
-                      child: Hero(
-                        tag: 'card_image_${model.id}',
-                        child: model.localImagePath != null
-                            ? Image.file(File(model.localImagePath!), fit: BoxFit.cover)
-                            : CachedNetworkImage(
-                                imageUrl: model.imageUrl,
-                                fit: BoxFit.cover,
-                              ),
-                      ),
+                      child: model.localImagePath != null
+                          ? Image.file(File(model.localImagePath!), fit: BoxFit.cover)
+                          : CachedNetworkImage(
+                              imageUrl: model.imageUrl,
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                 ),
@@ -259,13 +256,17 @@ class TcgCardView extends StatelessWidget {
                           backgroundImage: CachedNetworkImageProvider(model.authorAvatarUrl),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          'Illus. ${model.authorName}',
-                          style: const TextStyle(color: Colors.white54, fontSize: 9, fontStyle: FontStyle.italic),
+                        Flexible(
+                          child: Text(
+                            'Illus. ${model.authorName}',
+                            style: const TextStyle(color: Colors.white54, fontSize: 9, fontStyle: FontStyle.italic),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Text(
-                          "ID: ${model.id.padLeft(4, '0')}  ©Shufflo",
+                          "ID: ${model.id.length > 8 ? model.id.substring(0, 8) : model.id.padLeft(4, '0')}  ©Shufflo",
                           style: const TextStyle(color: Colors.white38, fontSize: 8),
                         ),
                       ],

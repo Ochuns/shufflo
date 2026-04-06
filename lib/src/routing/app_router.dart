@@ -71,17 +71,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/card_detail',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final extra = state.extra;
           if (extra is! ExperienceCardModel) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Invalid route')),
-              body: const Center(
-                child: Text('Unable to open card details.'),
+            return const NoTransitionPage(
+              child: Scaffold(
+                body: Center(child: Text('Unable to open card details.')),
               ),
             );
           }
-          return CardDetailScreen(model: extra);
+          return NoTransitionPage(child: CardDetailScreen(model: extra));
         },
       ),
       GoRoute(
