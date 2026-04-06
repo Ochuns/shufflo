@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'experience_card_model.dart';
+import 'mock_data.dart';
 import 'package:path/path.dart' as p;
 
 final supabaseRepositoryProvider = Provider((ref) => SupabaseRepository());
@@ -133,6 +134,8 @@ class SupabaseRepository {
         authorName: row['users'] != null ? row['users']['username'] : 'Explorer',
         authorAvatarUrl: row['users'] != null ? row['users']['avatar_url'] : 'https://i.pravatar.cc/300',
         isPublic: true,
+        rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
+        createdAt: row['created_at'] != null ? DateTime.parse(row['created_at']).toLocal() : null,
       ));
     }
 
@@ -151,8 +154,15 @@ class SupabaseRepository {
           authorName: row['users'] != null ? row['users']['username'] : 'Explorer',
           authorAvatarUrl: row['users'] != null ? row['users']['avatar_url'] : 'https://i.pravatar.cc/300',
           isPublic: false,
+          rarity: CardRarity.values.firstWhere((e) => e.name == (postData?['rarity'] ?? 'common'), orElse: () => CardRarity.common),
+          createdAt: row['visited_date'] != null ? DateTime.parse(row['visited_date']).toLocal() : null,
         ));
       }
+    }
+
+    // デモ/開発用にデータが空の場合はモックを返す (Supabase未設定時などの対策)
+    if (cards.isEmpty) {
+      return initialMockCards;
     }
 
     return cards;

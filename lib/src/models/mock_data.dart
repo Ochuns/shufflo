@@ -2,7 +2,7 @@ import 'experience_card_model.dart';
 import 'deck_model.dart';
 
 final List<ExperienceCardModel> initialMockCards = [
-  const ExperienceCardModel(
+  ExperienceCardModel(
     id: '1',
     title: 'Blue Bottle Coffee',
     imageUrl: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=600&q=80&fit=crop',
@@ -16,8 +16,9 @@ final List<ExperienceCardModel> initialMockCards = [
     tags: ['Relaxing', 'Good Coffee'],
     isPublic: true,
     rarity: CardRarity.common,
+    createdAt: DateTime.now().subtract(const Duration(days: 1)),
   ),
-  const ExperienceCardModel(
+  ExperienceCardModel(
     id: '2',
     title: 'Kyoto Imperial Palace',
     imageUrl: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80&fit=crop',
@@ -31,8 +32,9 @@ final List<ExperienceCardModel> initialMockCards = [
     tags: ['Historic', 'Photo Spot'],
     isPublic: true,
     rarity: CardRarity.legendary,
+    createdAt: DateTime.now(),
   ),
-  const ExperienceCardModel(
+  ExperienceCardModel(
     id: '3',
     title: 'Sushi Zanmai',
     imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=600&q=80&fit=crop',
@@ -46,6 +48,7 @@ final List<ExperienceCardModel> initialMockCards = [
     tags: ['Dinner', 'Seafood'],
     isPublic: false, // Private Card example
     rarity: CardRarity.rare,
+    createdAt: DateTime.now(),
   ),
 ];
 

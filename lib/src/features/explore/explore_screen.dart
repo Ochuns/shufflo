@@ -4,7 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cards_provider.dart';
-import '../../common_widgets/experience_card.dart';
+import '../../common_widgets/experience_card.dart'; // 互換性のため残す
+import '../../common_widgets/tcg_card_view.dart';
 import '../../models/experience_card_model.dart';
 import 'location_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,7 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final MapController _mapController = MapController();
+  final PageController _pageController = PageController(viewportFraction: 0.65);
   bool _isLoadingLocation = false;
 
   @override
@@ -49,6 +51,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -137,38 +145,68 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             ),
           ),
           
-          // 4. Bottom Sheet Preview (Floating Cards)
+          // 4. Bottom Sheet Preview (Floating TCG Cards peeking out)
           Positioned(
-            bottom: 24,
+            bottom: -260, // さっきよりさらに下げてひょっこり度を調整
             left: 0,
             right: 0,
-            child: SizedBox(
-              height: 160,
-              child: cardsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
-                data: (cards) {
-                  final publicCards = cards.where((c) => c.isPublic).toList();
-                  if (publicCards.isEmpty) return const SizedBox.shrink();
+            height: 480, // TCGカード枠を描画するのに十分な高さ
+            child: cardsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
+              data: (cards) {
+                final publicCards = cards.where((c) => c.isPublic).toList();
+                if (publicCards.isEmpty) return const SizedBox.shrink();
 
-                  return PageView.builder(
-                    controller: PageController(viewportFraction: 0.85),
-                    itemCount: publicCards.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: ExperienceCard(
-                          model: publicCards[index],
-                          isCompact: true,
+                return PageView.builder(
+                  controller: _pageController,
+                  itemCount: publicCards.length,
+                  itemBuilder: (context, index) {
+                    return AnimatedBuilder(
+                      animation: _pageController,
+                      builder: (context, child) {
+                        double scale = 1.0;
+                        if (_pageController.position.haveDimensions) {
+                          double page = _pageController.page ?? 0.0;
+                          // 中央からの離れ具合
+                          double diff = (page - index).abs();
+                          // 離れるほど小さくする (最大0.75倍まで小さくなる)
+                          scale = (1 - (diff * 0.15)).clamp(0.75, 1.0);
+                        } else {
+                          // ロード直後で1回も描画されていない時
+                          scale = index == 0 ? 1.0 : 0.75;
+                        }
+
+                        // 選択されていない両端のカードは下に下げる（カーブを描く）
+                        final double offsetY = (1 - scale) * 150;
+
+                        return Transform.translate(
+                          offset: Offset(0, offsetY),
+                          child: Transform.scale(
+                            scale: scale,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        // 上にスワイプした時に詳細画面へ遷移させる
+                        child: GestureDetector(
+                          onVerticalDragEnd: (details) {
+                            if (details.primaryVelocity != null && details.primaryVelocity! < -10) {
+                              context.push('/card_detail', extra: publicCards[index]);
+                            }
+                          },
                           onTap: () {
                             context.push('/card_detail', extra: publicCards[index]);
                           },
+                          child: TcgCardView(model: publicCards[index]),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],

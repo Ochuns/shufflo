@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/cards_provider.dart';
-import '../../common_widgets/experience_card.dart';
 import 'package:go_router/go_router.dart';
+import 'package:table_calendar/table_calendar.dart';
+import '../../models/cards_provider.dart';
+import '../../common_widgets/tcg_card_view.dart';
+import '../../models/experience_card_model.dart';
 import '../../models/mock_data.dart';
 
-class MyCardsScreen extends ConsumerWidget {
+class MyCardsScreen extends ConsumerStatefulWidget {
   const MyCardsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyCardsScreen> createState() => _MyCardsScreenState();
+}
+
+class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
     // ユーザー(自分)が作成した全カード（Public + Private両方）を表示
     final myCardsAsync = ref.watch(cardsProvider);
 
@@ -33,32 +43,95 @@ class MyCardsScreen extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  // Tab 1: Cards Grid
-                  myCardsAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, st) => Center(child: Text('Error: \$e', style: const TextStyle(color: Colors.red))),
-                    data: (myCards) {
-                      if (myCards.isEmpty) {
-                        return const Center(child: Text('No cards crafted yet.', style: TextStyle(color: Colors.grey)));
-                      }
-                      return GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.75, // トレーディングカード風の縦長比率
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                        itemCount: myCards.length,
-                        itemBuilder: (context, index) {
-                          return ExperienceCard(
-                            model: myCards[index],
-                            isCompact: true,
-                            onTap: () => context.push('/card_detail', extra: myCards[index]),
-                          );
+                  // Tab 1: Cards Grid with Calendar
+                  Column(
+                    children: [
+                      // Table Calendar
+                      TableCalendar(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _focusedDay,
+                        calendarFormat: CalendarFormat.week, // 週表示のみ
+                        availableCalendarFormats: const {
+                          CalendarFormat.week: 'Week',
                         },
-                      );
-                    },
+                        selectedDayPredicate: (day) {
+                          return isSameDay(_selectedDay, day);
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          // UTCの差分を吸収するためローカル時刻に明示的に変換して保存
+                          setState(() {
+                            _selectedDay = selectedDay.toLocal();
+                            _focusedDay = focusedDay.toLocal();
+                          });
+                        },
+                        headerStyle: const HeaderStyle(
+                          titleCentered: true,
+                          formatButtonVisible: false,
+                        ),
+                        calendarStyle: CalendarStyle(
+                          selectedDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          todayDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      // Filtered Cards Grid
+                      Expanded(
+                        child: myCardsAsync.when(
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                          error: (e, st) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+                          data: (myCards) {
+                            // 1. プライベート（非公開）カードのみに絞り込む
+                            final privateCards = myCards.where((c) => !c.isPublic).toList();
+
+                            // 2. 選択された日付と一致するものに絞り込む（年・月・日のマニュアル比較で確実性を高める）
+                            final filteredCards = privateCards.where((card) {
+                              if (card.createdAt == null || _selectedDay == null) return false;
+                              final date = card.createdAt!.toLocal();
+                              final target = _selectedDay!.toLocal();
+                              return date.year == target.year && 
+                                     date.month == target.month && 
+                                     date.day == target.day;
+                            }).toList();
+
+                            if (privateCards.isEmpty) {
+                              return const Center(child: Text('No private cards yet.', style: TextStyle(color: Colors.grey)));
+                            }
+                            if (filteredCards.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'No cards created on ${_selectedDay?.month}/${_selectedDay?.day}.', 
+                                  style: const TextStyle(color: Colors.grey)
+                                )
+                              );
+                            }
+                            return GridView.builder(
+                              padding: const EdgeInsets.all(16),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.65, // TCGカードのアスペクト比に合わせる
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                              itemCount: filteredCards.length,
+                              itemBuilder: (context, index) {
+                                // ここを TcgCardView に変更
+                                return GestureDetector(
+                                  onTap: () => context.push('/card_detail', extra: filteredCards[index]),
+                                  child: TcgCardView(model: filteredCards[index], isCompact: true),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   // Tab 2: Decks (Flow/Timeline view)
                   ListView(
