@@ -260,12 +260,12 @@ class TcgCardView extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Illus. \${model.authorName}',
+                          'Illus. ${model.authorName}',
                           style: const TextStyle(color: Colors.white54, fontSize: 9, fontStyle: FontStyle.italic),
                         ),
                         const Spacer(),
                         Text(
-                          "ID: \${model.id.padLeft(4, '0')}  ©Shufflo",
+                          "ID: ${model.id.padLeft(4, '0')}  ©Shufflo",
                           style: const TextStyle(color: Colors.white38, fontSize: 8),
                         ),
                       ],
