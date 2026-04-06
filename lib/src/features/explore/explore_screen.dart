@@ -4,7 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cards_provider.dart';
-import '../../common_widgets/experience_card.dart';
+import '../../common_widgets/experience_card.dart'; // 互換性のため残す
+import '../../common_widgets/tcg_card_view.dart';
 import '../../models/experience_card_model.dart';
 import 'location_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -137,38 +138,43 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             ),
           ),
           
-          // 4. Bottom Sheet Preview (Floating Cards)
+          // 4. Bottom Sheet Preview (Floating TCG Cards peeking out)
           Positioned(
-            bottom: 24,
+            bottom: -220, // 意図的にカードの下半分を画面外に隠して「ひょっこり」感を出す
             left: 0,
             right: 0,
-            child: SizedBox(
-              height: 160,
-              child: cardsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
-                data: (cards) {
-                  final publicCards = cards.where((c) => c.isPublic).toList();
-                  if (publicCards.isEmpty) return const SizedBox.shrink();
+            height: 400, // TCGカード枠を描画するのに十分な高さ
+            child: cardsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
+              data: (cards) {
+                final publicCards = cards.where((c) => c.isPublic).toList();
+                if (publicCards.isEmpty) return const SizedBox.shrink();
 
-                  return PageView.builder(
-                    controller: PageController(viewportFraction: 0.85),
-                    itemCount: publicCards.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: ExperienceCard(
-                          model: publicCards[index],
-                          isCompact: true,
-                          onTap: () {
+                return PageView.builder(
+                  controller: PageController(viewportFraction: 0.65), // カード同士の被りを調整
+                  itemCount: publicCards.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      // 上にスワイプした時に詳細画面へ遷移させる
+                      child: GestureDetector(
+                        onVerticalDragEnd: (details) {
+                          if (details.primaryVelocity != null && details.primaryVelocity! < -10) {
+                            // Swipe Up
                             context.push('/card_detail', extra: publicCards[index]);
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                          }
+                        },
+                        onTap: () {
+                          // タップでも遷移
+                          context.push('/card_detail', extra: publicCards[index]);
+                        },
+                        child: TcgCardView(model: publicCards[index]),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],

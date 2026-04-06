@@ -62,6 +62,7 @@ class ExperienceCardModel {
   final bool isPublic;
   final String? localImagePath;
   final CardRarity rarity;
+  final DateTime? createdAt;
 
   const ExperienceCardModel({
     required this.id,
@@ -78,5 +79,6 @@ class ExperienceCardModel {
     this.isPublic = true,
     this.localImagePath,
     this.rarity = CardRarity.common,
+    this.createdAt,
   });
 }
