@@ -135,19 +135,40 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           Positioned(
             bottom: 200, // Bottom Sheet の少し上に配置
             right: 16,
-            child: FloatingActionButton(
-              heroTag: 'location_fab',
-              backgroundColor: Colors.white,
-              onPressed: () => _goToCurrentLocation(),
-              child: _isLoadingLocation 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.my_location, color: Colors.blueAccent),
+            child: SizedBox(
+              width: 72,
+              height: 72,
+              child: FloatingActionButton(
+                heroTag: 'location_fab',
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                onPressed: () => _goToCurrentLocation(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _isLoadingLocation 
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.my_location, color: Colors.blueAccent, size: 22),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Current\nlocation',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.blueAccent, 
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 8, // 小さく
+                        height: 1.1, // 行間を詰める
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           
           // 4. Bottom Sheet Preview (Floating TCG Cards peeking out)
           Positioned(
-            bottom: -260, // さっきよりさらに下げてひょっこり度を調整
+            bottom: -300, // ひょっこり度を調整
             left: 0,
             right: 0,
             height: 480, // TCGカード枠を描画するのに十分な高さ
