@@ -81,7 +81,7 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                         ),
                       ),
                       const Divider(height: 1),
-                      // Filered Cards Grid
+                      // Filtered Cards Grid
                       Expanded(
                         child: myCardsAsync.when(
                           loading: () => const Center(child: CircularProgressIndicator()),
