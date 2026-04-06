@@ -31,6 +31,16 @@ class CardDetailScreen extends StatelessWidget {
     }
   }
 
+  IconData _getCategoryIcon(ExperienceCategory category) {
+    switch (category) {
+      case ExperienceCategory.restaurant: return Icons.restaurant_menu;
+      case ExperienceCategory.cafe: return Icons.local_cafe;
+      case ExperienceCategory.sightseeing: return Icons.landscape;
+      case ExperienceCategory.amusement: return Icons.attractions;
+      case ExperienceCategory.other: return Icons.star;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final rarityColor = _getRarityColor(model.rarity);
@@ -84,12 +94,35 @@ class CardDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // --- 1. Header (Title & Attribute) ---
+                      // --- 1. Header (Attribute & Title) ---
                       Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            // 属性マーク (Category Icon in a Badge)
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: model.category.color,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 1.5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: model.category.color.withOpacity(0.5),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                _getCategoryIcon(model.category),
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 model.title,
@@ -101,24 +134,6 @@ class CardDetailScreen extends StatelessWidget {
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // 属性バッジ (Category)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: model.category.color,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white38, width: 1),
-                              ),
-                              child: Text(
-                                model.category.label,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
                               ),
                             ),
                           ],
