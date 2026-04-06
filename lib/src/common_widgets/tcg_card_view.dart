@@ -187,7 +187,7 @@ class TcgCardView extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
                       child: Hero(
-                        tag: 'card_image_\${model.id}',
+                        tag: 'card_image_${model.id}',
                         child: model.localImagePath != null
                             ? Image.file(File(model.localImagePath!), fit: BoxFit.cover)
                             : CachedNetworkImage(
