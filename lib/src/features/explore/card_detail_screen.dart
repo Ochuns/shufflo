@@ -155,8 +155,23 @@ class CardDetailScreen extends StatelessWidget {
                                 letterSpacing: 2.0,
                               ),
                             ),
-                            // レベル（星の数）
-                            RatingStars(rating: model.rating, size: 14, color: Colors.amberAccent),
+                            // レベル（星の数）とキャプション
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text(
+                                  'RECOMMENDATION',
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                RatingStars(rating: model.rating, size: 14, color: Colors.amberAccent),
+                              ],
+                            ),
                           ],
                         ),
                       ),
