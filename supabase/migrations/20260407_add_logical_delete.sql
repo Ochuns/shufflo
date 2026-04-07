@@ -7,17 +7,7 @@ ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAUL
 -- (MVP構成のため、SELECTのフィルタリングはアプリ側クエリで行います)
 
 -- 3. RLS ポリシーの強化 (自分以外のユーザーが物理削除・更新できないように制限)
--- すべてのテーブルに対して、更新・削除は所有者のみとするポリシー (既に存在する場合はスキップ)
-
--- 3a. posts テーブル用
-DO $$ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'posts' AND policyname = 'Users can update their own posts') THEN
-    CREATE POLICY "Users can update their own posts" ON posts
-      FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-  END IF;
-END $$;
-
+-- posts の UPDATE ポリシーは後半の DROP/CREATE で一元管理し、重複作成を避ける
 -- 4. 開発・テスト用にインデックスを追加 (クエリ高速化)
 CREATE INDEX IF NOT EXISTS idx_posts_deleted_at ON posts (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_public_cards_deleted_at ON public_cards (deleted_at);
