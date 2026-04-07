@@ -23,11 +23,6 @@ CREATE INDEX IF NOT EXISTS idx_posts_deleted_at ON posts (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_public_cards_deleted_at ON public_cards (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_private_cards_deleted_at ON private_cards (deleted_at);
 
--- 5. 基礎：論理削除用カラムの追加 (存在しない場合のみ)
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL;
-ALTER TABLE public_cards ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL;
-ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL;
-
 -- 6. 秘策：部分インデックス (Partial Index) の作成 【負荷対策の要】
 -- 「削除されていないデータだけ」をインデックス化するため、検索が常に高速です。
 -- これにより、削除済みデータがどれだけ増えても、アクティブなデータの検索速度に影響しません。
