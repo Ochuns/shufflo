@@ -2,7 +2,13 @@
 -- 【決定版】権限・論理削除・履歴管理の統合SQL
 -- ==========================================
 
--- 1. 閲覧(SELECT)ポリシーの修正
+-- 1. すべてのテーブルの RLS を有効化
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE private_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+
+-- 2. 閲覧(SELECT)ポリシーの修正
 -- 公開カード・ポストは「削除されていないもの」または「本人のもの」が見えるようにする
 DROP POLICY IF EXISTS "Anyone can see active posts" ON posts;
 CREATE POLICY "Anyone can see active posts" ON posts
@@ -32,7 +38,6 @@ CREATE POLICY "Users can insert their own private cards" ON private_cards
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- location は場所登録のために誰でもINSERT/SELECT可にする
-ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Anyone can manage locations" ON locations;
 CREATE POLICY "Anyone can manage locations" ON locations
   FOR ALL USING (true);
