@@ -49,6 +49,7 @@ CREATE POLICY "Anyone can see active posts" ON posts
   FOR SELECT USING (deleted_at IS NULL);
 
 -- 更新（論理削除含む）は本人限定
+DROP POLICY IF EXISTS "Users can update their own posts" ON posts;
 DROP POLICY IF EXISTS "Users can manage their own posts" ON posts;
 CREATE POLICY "Users can manage their own posts" ON posts
   FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
