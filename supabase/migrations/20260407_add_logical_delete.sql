@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_active_posts
   WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_active_public_cards 
-  ON public_cards (id, created_at) 
+  ON public_cards (created_at) 
   WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_active_private_cards 
