@@ -35,6 +35,34 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     ref.invalidateSelf();
     await future;
   }
+
+  Future<void> deleteCard(String postId) async {
+    final repo = ref.read(supabaseRepositoryProvider);
+    await repo.deletePost(postId);
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> updateCard({
+    required String postId,
+    required String title,
+    required ExperienceCategory category,
+    required double rating,
+    required String publicComment,
+    required String privateComment,
+  }) async {
+    final repo = ref.read(supabaseRepositoryProvider);
+    await repo.updatePost(
+      postId: postId,
+      title: title,
+      category: category,
+      rating: rating,
+      publicComment: publicComment,
+      privateComment: privateComment,
+    );
+    ref.invalidateSelf();
+    await future;
+  }
 }
 
 final cardsProvider = AsyncNotifierProvider<CardsNotifier, List<ExperienceCardModel>>(() {
