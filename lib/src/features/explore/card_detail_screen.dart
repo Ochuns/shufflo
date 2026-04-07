@@ -72,33 +72,50 @@ class CardDetailScreen extends ConsumerWidget {
   }
 
   void _showDeleteDialog(BuildContext context, WidgetRef ref, ExperienceCardModel targetModel) {
+    final canDelete = targetModel.postId != null;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: const Text('Delete Card?', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'This card and its public posts will be moved to your history and not be visible to others. This action can be undone later.',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          canDelete
+              ? 'This card and its public posts will be moved to your history and not be visible to others. This action can be undone later.'
+              : 'This card cannot be deleted because it does not have a post ID.',
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
-              if (targetModel.postId != null) {
-                await ref.read(cardsProvider.notifier).deleteCard(targetModel.postId!);
-                if (context.mounted) {
-                  Navigator.pop(context); // Close dialog
-                  context.pop(); // Go back from detail
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Card deleted (archived).')),
-                  );
-                }
-              }
-            },
+            onPressed: canDelete
+                ? () async {
+                    final postId = targetModel.postId;
+                    if (postId == null) {
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Unable to delete this card because its post ID is missing.'),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    await ref.read(cardsProvider.notifier).deleteCard(postId);
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext); // Close dialog
+                      context.pop(); // Go back from detail
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Card deleted (archived).')),
+                      );
+                    }
+                  }
+                : null,
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
             child: const Text('Delete'),
           ),
