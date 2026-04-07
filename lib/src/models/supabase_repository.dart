@@ -122,10 +122,14 @@ class SupabaseRepository {
     final userId = currentUserId;
 
     // Public Cards
-    final pubRes = await _supabase.from('public_cards').select('*, users(username, avatar_url)');
+    final pubRes = await _supabase.from('public_cards')
+        .select('*, users(username, avatar_url)')
+        .filter('deleted_at', 'is', null); // 論理削除されていないもののみ
     for (var row in pubRes) {
       cards.add(ExperienceCardModel(
         id: row['id'],
+        postId: row['post_id'],
+        authorId: row['user_id'],
         title: row['title'] ?? 'Untitled',
         imageUrl: row['image_url'] ?? '',
         rating: (row['rating'] ?? 3).toDouble(),
@@ -141,11 +145,16 @@ class SupabaseRepository {
 
     if (userId != null) {
       // Private Cards for the specific user
-      final privRes = await _supabase.from('private_cards').select('*, posts!inner(title, category, rating), users(username, avatar_url)').eq('user_id', userId);
+      final privRes = await _supabase.from('private_cards')
+          .select('*, posts!inner(title, category, rating), users(username, avatar_url)')
+          .eq('user_id', userId)
+          .filter('deleted_at', 'is', null); // 論理削除されていないもののみ
       for (var row in privRes) {
         final postData = row['posts'];
         cards.add(ExperienceCardModel(
           id: row['id'],
+          postId: row['post_id'],
+          authorId: row['user_id'],
           title: postData?['title'] ?? 'Untitled',
           imageUrl: row['image_url'] ?? '',
           rating: (postData?['rating'] ?? 3).toDouble(),
@@ -166,5 +175,50 @@ class SupabaseRepository {
     }
 
     return cards;
+  }
+
+  // 5. カード（Post）の論理削除 (DBトリガーにより他テーブルも自動連動)
+  Future<void> deletePost(String postId) async {
+    final now = DateTime.now().toIso8601String();
+    
+    // posts テーブルの deleted_at を更新するだけ
+    // (supabase/migrations/20260407_fix_deletion_trigger.sql のトリガーが連動)
+    try {
+      await _supabase.from('posts').update({'deleted_at': now}).eq('id', postId);
+    } catch (e) {
+      print('Error deleting post: $e');
+      rethrow;
+    }
+  }
+
+  // 6. カード（Post）の更新
+  Future<void> updatePost({
+    required String postId,
+    required String title,
+    required ExperienceCategory category,
+    required double rating,
+    required String publicComment,
+    required String privateComment,
+  }) async {
+    // Post情報の更新
+    await _supabase.from('posts').update({
+      'title': title,
+      'category': category.name,
+      'rating': rating.toInt(),
+      'comment': publicComment,
+    }).eq('id', postId);
+
+    // Public Card の更新
+    await _supabase.from('public_cards').update({
+      'title': title,
+      'category': category.name,
+      'rating': rating.toInt(),
+      'comment': publicComment,
+    }).eq('post_id', postId);
+
+    // Private Card の更新 (プライベートコメントのみ)
+    await _supabase.from('private_cards').update({
+      'comment': privateComment,
+    }).eq('post_id', postId);
   }
 }

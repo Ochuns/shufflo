@@ -49,6 +49,8 @@ extension ExperienceCategoryExtension on ExperienceCategory {
 
 class ExperienceCardModel {
   final String id;
+  final String? postId; // もととなるポストID (削除・編集用)
+  final String? authorId; // 投稿者ID (権限チェック用)
   final String title;
   final String imageUrl;
   final double rating;
@@ -66,6 +68,8 @@ class ExperienceCardModel {
 
   const ExperienceCardModel({
     required this.id,
+    this.postId,
+    this.authorId,
     required this.title,
     required this.imageUrl,
     required this.rating,
