@@ -5,7 +5,7 @@ import 'scaffold_with_nav_bar.dart';
 import '../models/experience_card_model.dart';
 import '../models/deck_model.dart';
 
-// Screens
+import '../features/home/home_screen.dart';
 import '../features/explore/explore_screen.dart';
 import '../features/explore/card_detail_screen.dart';
 import '../features/my_cards/my_cards_screen.dart';
@@ -14,14 +14,15 @@ import '../features/profile/profile_screen.dart';
 import '../features/post/post_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _exploreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'explore');
-final _postNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'post');
+final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final _myCardsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'my_cards');
+final _postNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'post');
+final _exploreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'explore');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/explore',
+    initialLocation: '/home',
     navigatorKey: _rootNavigatorKey,
     routes: [
       StatefulShellRoute.indexedStack(
@@ -30,11 +31,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
         branches: [
           StatefulShellBranch(
-            navigatorKey: _exploreNavigatorKey,
+            navigatorKey: _homeNavigatorKey,
             routes: [
               GoRoute(
-                path: '/explore',
-                builder: (context, state) => const ExploreScreen(),
+                path: '/home',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _myCardsNavigatorKey,
+            routes: [
+              GoRoute(
+                path: '/my_cards',
+                builder: (context, state) => const MyCardsScreen(),
               ),
             ],
           ),
@@ -48,11 +58,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
-            navigatorKey: _myCardsNavigatorKey,
+            navigatorKey: _exploreNavigatorKey,
             routes: [
               GoRoute(
-                path: '/my_cards',
-                builder: (context, state) => const MyCardsScreen(),
+                path: '/explore',
+                builder: (context, state) => const ExploreScreen(),
               ),
             ],
           ),
