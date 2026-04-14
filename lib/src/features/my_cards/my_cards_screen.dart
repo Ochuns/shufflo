@@ -55,6 +55,14 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                         availableCalendarFormats: const {
                           CalendarFormat.week: 'Week',
                         },
+                        eventLoader: (day) {
+                          // その日に自分の非公開カードがあるかチェックしてマーカーを表示
+                          final cards = myCardsAsync.value ?? [];
+                          return cards.where((c) {
+                            if (c.createdAt == null || c.isPublic) return false;
+                            return isSameDay(c.createdAt, day);
+                          }).toList();
+                        },
                         selectedDayPredicate: (day) {
                           return isSameDay(_selectedDay, day);
                         },
@@ -71,13 +79,39 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                         ),
                         calendarStyle: CalendarStyle(
                           selectedDecoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme.of(context).colorScheme.primary, // Pop Yellow
                             shape: BoxShape.circle,
+                          ),
+                          selectedTextStyle: const TextStyle(
+                            color: Colors.black, 
+                            fontWeight: FontWeight.bold
                           ),
                           todayDecoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                             shape: BoxShape.circle,
                           ),
+                          defaultTextStyle: const TextStyle(color: Colors.white),
+                          weekendTextStyle: const TextStyle(color: Colors.white70),
+                          outsideTextStyle: const TextStyle(color: Colors.grey),
+                          markersAlignment: Alignment.bottomCenter,
+                        ),
+                        calendarBuilders: CalendarBuilders(
+                          markerBuilder: (context, date, events) {
+                            if (events.isNotEmpty) {
+                              return Center(
+                                child: Icon(
+                                  Icons.check,
+                                  size: 32,
+                                  color: Colors.red.withValues(alpha: 0.6), // 透過させて数字も見えるように
+                                ),
+                              );
+                            }
+                            return null;
+                          },
+                        ),
+                        daysOfWeekStyle: const DaysOfWeekStyle(
+                          weekdayStyle: TextStyle(color: Colors.white70),
+                          weekendStyle: TextStyle(color: Colors.white70),
                         ),
                       ),
                       const Divider(height: 1),
