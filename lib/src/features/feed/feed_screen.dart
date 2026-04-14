@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class FeedScreen extends StatelessWidget {
+  const FeedScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -16,19 +17,19 @@ class HomeScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 40),
               Text(
-                'Shufflo Feed',
+                'Missions & Exchange',
                 style: GoogleFonts.outfit(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2D3436),
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Discover daily adventures from you and your friends.',
+                'Join events, trade cards with friends, and complete missions to earn rare items.',
                 style: GoogleFonts.inter(
                   fontSize: 16,
-                  color: Colors.grey.shade600,
+                  color: Colors.grey.shade400,
                   height: 1.5,
                 ),
               ),
@@ -39,34 +40,28 @@ class HomeScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFF141414),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
-                      child: Icon(
-                        Icons.feed_outlined,
+                      child: const Icon(
+                        LucideIcons.gamepad2,
                         size: 64,
-                        color: Colors.blue.shade300,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 32),
                     Text(
-                      'Feed is Coming Soon',
+                      'Game Hub is Coming Soon',
                       style: GoogleFonts.outfit(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF2D3436),
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'We are currently preparing the timeline experience for you.',
+                      'We are preparing exciting missions and a card exchange system for you and your friends.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,

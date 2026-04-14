@@ -15,17 +15,17 @@ class ProfileScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: Colors.black,
         appBar: AppBar(
           title: Text(
             'Profile',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: const Color(0xFF2D3436)),
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.black,
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(LucideIcons.settings, color: Color(0xFF2D3436)),
+              icon: const Icon(LucideIcons.settings, color: Colors.white),
               onPressed: () {},
             ),
           ],
@@ -38,7 +38,7 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 // Profile Header
                 Container(
-                  color: Colors.white,
+                  color: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                   child: Column(
                     children: [
@@ -52,7 +52,7 @@ class ProfileScreen extends ConsumerWidget {
                         style: GoogleFonts.outfit(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF2D3436),
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -77,12 +77,12 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 // Tab Bar
                 Container(
-                  color: Colors.white,
+                  color: Colors.black,
                   child: TabBar(
-                    labelColor: const Color(0xFF6C5CE7),
-                    unselectedLabelColor: Colors.grey.shade400,
-                    indicatorColor: const Color(0xFF6C5CE7),
-                    indicatorWeight: 3,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.grey.shade700,
+                    indicatorColor: Colors.white,
+                    indicatorWeight: 2,
                     labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
                     tabs: const [
                       Tab(icon: Icon(LucideIcons.user, size: 20), text: 'Info'),
@@ -117,7 +117,7 @@ class ProfileScreen extends ConsumerWidget {
           style: GoogleFonts.outfit(
             fontSize: 20, 
             fontWeight: FontWeight.w700, 
-            color: const Color(0xFF2D3436),
+            color: Colors.white,
           ),
         ),
         Text(
@@ -144,7 +144,7 @@ class ProfileScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade300),
+          Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade800),
           const SizedBox(height: 16),
           Text(
             'No Tagged Favorites Yet',
@@ -153,7 +153,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Tag your favorite cards to see them here.',
-            style: GoogleFonts.inter(color: Colors.grey.shade500),
+            style: GoogleFonts.inter(color: Colors.grey.shade700),
           ),
         ],
       ),
@@ -166,19 +166,25 @@ class ProfileScreen extends ConsumerWidget {
       child: Column(
         children: [
           TextField(
+            style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'Search friends by ID...',
-              prefixIcon: const Icon(LucideIcons.search, size: 20),
+              hintStyle: TextStyle(color: Colors.grey.shade600),
+              prefixIcon: Icon(LucideIcons.search, size: 20, color: Colors.grey.shade600),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: const Color(0xFF141414),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
             ),
           ),
           const SizedBox(height: 40),
-          Icon(LucideIcons.userPlus, size: 48, color: Colors.grey.shade300),
+          Icon(LucideIcons.userPlus, size: 48, color: Colors.grey.shade800),
           const SizedBox(height: 16),
           Text(
             'Find Your Friends',
@@ -193,15 +199,16 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
+          Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
           const SizedBox(height: 8),
-          Text(content, style: GoogleFonts.inter(fontSize: 15, color: const Color(0xFF2D3436))),
+          Text(content, style: GoogleFonts.inter(fontSize: 15, color: Colors.white)),
         ],
       ),
     );
