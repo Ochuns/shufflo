@@ -17,14 +17,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
       body: navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
+          color: Colors.black,
+          border: Border(
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+          ),
         ),
         child: SafeArea(
           child: Container(
@@ -34,8 +30,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavBarItem(
-                  icon: LucideIcons.home,
-                  label: 'Home',
+                  icon: LucideIcons.map,
+                  label: 'Map',
                   isSelected: navigationShell.currentIndex == 0,
                   onTap: () => navigationShell.goBranch(0),
                 ),
@@ -50,8 +46,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
                   isSelected: navigationShell.currentIndex == 2,
                 ),
                 _NavBarItem(
-                  icon: LucideIcons.compass,
-                  label: 'Explore',
+                  icon: LucideIcons.gamepad2,
+                  label: 'Feed',
                   isSelected: navigationShell.currentIndex == 3,
                   onTap: () => navigationShell.goBranch(3),
                 ),
@@ -85,7 +81,7 @@ class _NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? const Color(0xFF2D3436) : Colors.grey.shade400;
+    final color = isSelected ? Colors.white : Colors.grey.shade700;
     
     return GestureDetector(
       onTap: onTap,
@@ -133,25 +129,24 @@ class _PostButton extends StatelessWidget {
         width: 54,
         height: 54,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6C5CE7), Color(0xFFa29bfe)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Colors.black,
           shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
           boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF6C5CE7).withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
+            if (isSelected) 
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.1),
+                blurRadius: 10,
+              ),
           ],
-          border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
         ),
         child: const Icon(
-          LucideIcons.camera,
+          LucideIcons.plus,
           color: Colors.white,
-          size: 26,
+          size: 28,
         ),
       ),
     );

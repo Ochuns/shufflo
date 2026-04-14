@@ -5,7 +5,7 @@ import 'scaffold_with_nav_bar.dart';
 import '../models/experience_card_model.dart';
 import '../models/deck_model.dart';
 
-import '../features/home/home_screen.dart';
+import '../features/feed/feed_screen.dart';
 import '../features/explore/explore_screen.dart';
 import '../features/explore/card_detail_screen.dart';
 import '../features/my_cards/my_cards_screen.dart';
@@ -14,15 +14,15 @@ import '../features/profile/profile_screen.dart';
 import '../features/post/post_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
+final _exploreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'explore');
 final _myCardsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'my_cards');
 final _postNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'post');
-final _exploreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'explore');
+final _feedNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'feed');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/map',
     navigatorKey: _rootNavigatorKey,
     routes: [
       StatefulShellRoute.indexedStack(
@@ -31,11 +31,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
         branches: [
           StatefulShellBranch(
-            navigatorKey: _homeNavigatorKey,
+            navigatorKey: _exploreNavigatorKey,
             routes: [
               GoRoute(
-                path: '/home',
-                builder: (context, state) => const HomeScreen(),
+                path: '/map',
+                builder: (context, state) => const ExploreScreen(),
               ),
             ],
           ),
@@ -58,11 +58,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
-            navigatorKey: _exploreNavigatorKey,
+            navigatorKey: _feedNavigatorKey,
             routes: [
               GoRoute(
-                path: '/explore',
-                builder: (context, state) => const ExploreScreen(),
+                path: '/feed',
+                builder: (context, state) => const FeedScreen(),
               ),
             ],
           ),
