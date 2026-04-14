@@ -39,39 +39,49 @@ class ProfileScreen extends ConsumerWidget {
                 // Profile Header
                 Container(
                   color: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                  child: Column(
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                  child: Row(
                     children: [
                       const CircleAvatar(
-                        radius: 45,
+                        radius: 35,
                         backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/300'),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Creative Editor',
-                        style: GoogleFonts.outfit(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Creative Editor',
+                              style: GoogleFonts.outfit(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '@experience_crafter',
+                              style: GoogleFonts.inter(
+                                color: Colors.grey.shade500,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '@experience_crafter',
-                        style: GoogleFonts.inter(
-                          color: Colors.grey.shade500,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildStatItem(cards.length.toString(), 'Cards'),
-                          _buildStatItem('3', 'Decks'),
-                          _buildStatItem('12', 'Friends'),
-                        ],
-                      ),
+                    ],
+                  ),
+                ),
+                // Stats Row
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildStatItem(cards.length.toString(), 'Cards'),
+                      _buildStatItem('3', 'Decks'),
+                      _buildStatItem('12', 'Friends'),
                     ],
                   ),
                 ),

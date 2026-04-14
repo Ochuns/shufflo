@@ -117,7 +117,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
-                        label: Text(cat.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        label: Text(cat.label, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2D3436))),
                         onSelected: (val) {},
                         backgroundColor: Colors.white,
                         side: BorderSide.none,
