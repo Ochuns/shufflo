@@ -79,7 +79,7 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                         ),
                         calendarStyle: CalendarStyle(
                           selectedDecoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary, // Pop Yellow
+                            color: Theme.of(context).colorScheme.primary, // Theme primary color
                             shape: BoxShape.circle,
                           ),
                           selectedTextStyle: const TextStyle(
