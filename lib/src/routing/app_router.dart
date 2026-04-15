@@ -14,7 +14,7 @@ import '../features/profile/profile_screen.dart';
 import '../features/post/post_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _exploreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'explore');
+final _mapNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'map');
 final _myCardsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'my_cards');
 final _postNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'post');
 final _feedNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'feed');
@@ -31,7 +31,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
         branches: [
           StatefulShellBranch(
-            navigatorKey: _exploreNavigatorKey,
+            navigatorKey: _mapNavigatorKey,
             routes: [
               GoRoute(
                 path: '/map',
