@@ -60,7 +60,7 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
                           final cards = myCardsAsync.value ?? [];
                           return cards.where((c) {
                             if (c.createdAt == null || c.isPublic) return false;
-                            return isSameDay(c.createdAt, day);
+                            return isSameDay(c.createdAt!.toLocal(), day);
                           }).toList();
                         },
                         selectedDayPredicate: (day) {
