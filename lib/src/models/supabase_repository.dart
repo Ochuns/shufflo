@@ -120,8 +120,11 @@ class SupabaseRepository {
 
       return postId;
     } catch (e) {
-      debugPrint("submitPost Supabase error: $e. Returning mock ID for local testing.");
-      return 'mock_post_${DateTime.now().millisecondsSinceEpoch}';
+      if (kDebugMode) {
+        debugPrint("submitPost Supabase error: $e. Returning mock ID for local testing.");
+        return 'mock_post_${DateTime.now().millisecondsSinceEpoch}';
+      }
+      rethrow;
     }
   }
 
