@@ -10,6 +10,7 @@ import '../features/explore/explore_screen.dart';
 import '../features/explore/card_detail_screen.dart';
 import '../features/my_cards/my_cards_screen.dart';
 import '../features/my_cards/deck_playback_screen.dart';
+import '../features/my_cards/create_deck_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/post/post_screen.dart';
 
@@ -110,6 +111,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           }
           return DeckPlaybackScreen(deck: extra);
         },
+      ),
+      GoRoute(
+        path: '/create_deck',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CreateDeckScreen(),
       ),
     ],
   );

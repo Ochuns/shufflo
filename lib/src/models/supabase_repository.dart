@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'experience_card_model.dart';
+import 'deck_model.dart';
 import 'mock_data.dart';
 import 'package:path/path.dart' as p;
 
@@ -33,9 +34,9 @@ class SupabaseRepository {
     final file = File(localPath);
     if (!await file.exists()) return null;
 
-    final fileName = "\${DateTime.now().millisecondsSinceEpoch}_local.jpg";
+    final fileName = "${DateTime.now().millisecondsSinceEpoch}_local.jpg";
     final ext = p.extension(localPath);
-    final fullPath = "\${DateTime.now().millisecondsSinceEpoch}\$ext";
+    final fullPath = "${DateTime.now().millisecondsSinceEpoch}$ext";
     
     try {
       await _supabase.storage.from(bucket).upload(fullPath, file);
@@ -180,9 +181,6 @@ class SupabaseRepository {
   // 5. カード（Post）の論理削除 (DBトリガーにより他テーブルも自動連動)
   Future<void> deletePost(String postId) async {
     final now = DateTime.now().toIso8601String();
-    
-    // posts テーブルの deleted_at を更新するだけ
-    // (supabase/migrations/20260407_fix_deletion_trigger.sql のトリガーが連動)
     try {
       await _supabase.from('posts').update({'deleted_at': now}).eq('id', postId);
     } catch (e) {
@@ -200,7 +198,6 @@ class SupabaseRepository {
     required String publicComment,
     required String privateComment,
   }) async {
-    // Post情報の更新
     await _supabase.from('posts').update({
       'title': title,
       'category': category.name,
@@ -208,7 +205,6 @@ class SupabaseRepository {
       'comment': publicComment,
     }).eq('id', postId);
 
-    // Public Card の更新
     await _supabase.from('public_cards').update({
       'title': title,
       'category': category.name,
@@ -216,9 +212,39 @@ class SupabaseRepository {
       'comment': publicComment,
     }).eq('post_id', postId);
 
-    // Private Card の更新 (プライベートコメントのみ)
     await _supabase.from('private_cards').update({
       'comment': privateComment,
     }).eq('post_id', postId);
+  }
+
+  // --- Decks (Deck management) ---
+
+  // 仮のローカルストレージ（Supabaseテーブルがない場合のフォールバック用）
+  static final List<DeckModel> _localDecks = [...initialMockDecks];
+
+  Future<List<DeckModel>> fetchAllDecks() async {
+    // 将来的にはここで _supabase.from('decks').select(...) を呼び出す
+    // 現状はテーブルが未定義のため、初期モック＋追加分を返す
+    await Future.delayed(const Duration(milliseconds: 500)); // 通信シミュレーション
+    return _localDecks;
+  }
+
+  Future<void> createDeck({required String title}) async {
+    // 将来的にはここで _supabase.from('decks').insert(...)
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    final newDeck = DeckModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      date: DateTime.now(),
+      cards: [], // 新規作成時は空
+      location: 'No Location Yet',
+    );
+    _localDecks.insert(0, newDeck);
+  }
+
+  Future<void> deleteDeck(String deckId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _localDecks.removeWhere((d) => d.id == deckId);
   }
 }
