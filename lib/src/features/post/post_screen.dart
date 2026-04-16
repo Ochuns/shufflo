@@ -211,15 +211,15 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                 if (decks.isEmpty) return const SizedBox.shrink();
                 return Column(
                   children: [
-                    DropdownButtonFormField<String>(
+                    DropdownButtonFormField<String?>(
                       decoration: const InputDecoration(
                         labelText: 'Add to Deck (Optional)',
                         hintText: 'Select a deck to add this card to',
                       ),
                       value: _selectedDeckId,
                       items: [
-                        const DropdownMenuItem<String>(value: null, child: Text('None')),
-                        ...decks.map((d) => DropdownMenuItem(value: d.id, child: Text(d.title))).toList(),
+                        const DropdownMenuItem<String?>(value: null, child: Text('None')),
+                        ...decks.map((d) => DropdownMenuItem<String?>(value: d.id, child: Text(d.title))).toList(),
                       ],
                       onChanged: (val) => setState(() => _selectedDeckId = val),
                     ),
