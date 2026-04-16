@@ -35,7 +35,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: \$e')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     } finally {
