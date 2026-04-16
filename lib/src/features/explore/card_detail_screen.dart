@@ -8,8 +8,13 @@ import '../../common_widgets/tcg_card_view.dart';
 
 class CardDetailScreen extends ConsumerWidget {
   final ExperienceCardModel model;
+  final bool showAppBar;
 
-  const CardDetailScreen({super.key, required this.model});
+  const CardDetailScreen({
+    super.key, 
+    required this.model,
+    this.showAppBar = true,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,7 +34,7 @@ class CardDetailScreen extends ConsumerWidget {
 
         return Scaffold(
           backgroundColor: const Color(0xFF121212), 
-          appBar: AppBar(
+          appBar: showAppBar ? AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
@@ -48,12 +53,17 @@ class CardDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
               ],
             ],
-          ),
+          ) : null,
           extendBodyBehindAppBar: true,
           body: SafeArea(
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: EdgeInsets.only(
+                  left: 24, 
+                  right: 24, 
+                  bottom: 16,
+                  top: showAppBar ? 16 : 72, // AppBarがない（デッキ内）場合は、上部のカスタムバーと被らないよう大きく余白を取る
+                ),
                 child: TcgCardView(model: latestModel),
               ),
             ),

@@ -243,6 +243,22 @@ class SupabaseRepository {
     _localDecks.insert(0, newDeck);
   }
 
+  Future<void> updateDeck({required String deckId, required String title}) async {
+    // 将来的にはここで _supabase.from('decks').update({'title': title}).eq('id', deckId)
+    await Future.delayed(const Duration(milliseconds: 500));
+    final index = _localDecks.indexWhere((d) => d.id == deckId);
+    if (index >= 0) {
+      final old = _localDecks[index];
+      _localDecks[index] = DeckModel(
+        id: old.id,
+        title: title,
+        date: old.date,
+        cards: old.cards,
+        location: old.location,
+      );
+    }
+  }
+
   Future<void> deleteDeck(String deckId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     _localDecks.removeWhere((d) => d.id == deckId);

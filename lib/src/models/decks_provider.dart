@@ -18,6 +18,13 @@ class DecksNotifier extends AsyncNotifier<List<DeckModel>> {
     await future;
   }
 
+  Future<void> updateDeck(String deckId, String title) async {
+    final repo = ref.read(supabaseRepositoryProvider);
+    await repo.updateDeck(deckId: deckId, title: title);
+    ref.invalidateSelf();
+    await future;
+  }
+
   Future<void> deleteDeck(String deckId) async {
     final repo = ref.read(supabaseRepositoryProvider);
     await repo.deleteDeck(deckId);
