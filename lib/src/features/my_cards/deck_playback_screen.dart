@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/deck_model.dart';
 import '../../models/decks_provider.dart';
+import '../../models/cards_provider.dart';
+import '../../models/experience_card_model.dart';
 import '../explore/card_detail_screen.dart';
 
 class DeckPlaybackScreen extends ConsumerStatefulWidget {
@@ -34,16 +36,27 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
           title: Text(latestDeck.title),
           actions: [
             IconButton(
-              icon: const Icon(LucideIcons.edit2),
+              icon: const Icon(Icons.edit_outlined),
               onPressed: () => _showEditSheet(context, latestDeck),
             ),
             IconButton(
-              icon: const Icon(LucideIcons.trash2),
+              icon: const Icon(Icons.delete_outline),
               onPressed: () => _showDeleteDialog(context, latestDeck),
             ),
           ],
         ),
-        body: const Center(child: Text("This deck is empty.")),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("This deck is empty.", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              SizedBox(height: 12),
+              Text("Create a new card from the camera button\nand select this deck to add it.", 
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white54, fontSize: 14)),
+            ],
+          ),
+        ),
       );
     }
 
@@ -61,8 +74,9 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
             },
             itemCount: latestDeck.cards.length,
             itemBuilder: (context, index) {
+              final card = latestDeck.cards[index];
               return CardDetailScreen(
-                model: latestDeck.cards[index],
+                model: card,
                 showAppBar: false, // カード単体のAppBarは非表示にし、Deck全体のアクションに専念させる
               );
             },
@@ -99,7 +113,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Back Button (Left)
+                   // Back Button (Left)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: IconButton(
@@ -268,3 +282,5 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
     super.dispose();
   }
 }
+
+

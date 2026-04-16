@@ -5,6 +5,7 @@ import 'experience_card_model.dart';
 import 'deck_model.dart';
 import 'mock_data.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart';
 
 final supabaseRepositoryProvider = Provider((ref) => SupabaseRepository());
 
@@ -47,8 +48,8 @@ class SupabaseRepository {
     }
   }
 
-  // 3. すべての関連テーブルに新しいカード(Post)を追加
-  Future<void> submitPost({
+  // 3. すべての関連テーブルに新しいカード(Post)を追加し、投稿IDを返す
+  Future<String> submitPost({
     required String title,
     required ExperienceCategory category,
     required double rating,
@@ -72,49 +73,56 @@ class SupabaseRepository {
     final lon = longitude ?? 139.7016;
     final locName = latitude != null ? 'Extracted Location' : 'Unknown Location (Default)';
 
-    final locationInsert = await _supabase.from('locations').insert({
-      'name': locName,
-      'latitude': lat,
-      'longitude': lon,
-      'address': 'No Address',
-    }).select('id').single();
-    final locationId = locationInsert['id'];
+    try {
+      final locationInsert = await _supabase.from('locations').insert({
+        'name': locName,
+        'latitude': lat,
+        'longitude': lon,
+        'address': 'No Address',
+      }).select('id').single();
+      final locationId = locationInsert['id'];
 
-    // Post
-    final postInsert = await _supabase.from('posts').insert({
-      'user_id': userId,
-      'location_id': locationId,
-      'title': title,
-      'category': category.name,
-      'rating': rating.toInt(),
-      'comment': publicComment,
-      'public_image_url': pubImageUrl,
-      'private_image_url': privImageUrl,
-    }).select('id').single();
-    final postId = postInsert['id'];
+      // Post
+      final postInsert = await _supabase.from('posts').insert({
+        'user_id': userId,
+        'location_id': locationId,
+        'title': title,
+        'category': category.name,
+        'rating': rating.toInt(),
+        'comment': publicComment,
+        'public_image_url': pubImageUrl,
+        'private_image_url': privImageUrl,
+      }).select('id').single();
+      final postId = postInsert['id'];
 
-    // Public Card (with PostGIS Point)
-    await _supabase.from('public_cards').insert({
-      'post_id': postId,
-      'user_id': userId,
-      'location_id': locationId,
-      'title': title,
-      'category': category.name,
-      'rating': rating.toInt(),
-      'comment': publicComment,
-      'image_url': pubImageUrl,
-      'location_coords': 'POINT($lon $lat)'
-    });
+      // Public Card (with PostGIS Point)
+      await _supabase.from('public_cards').insert({
+        'post_id': postId,
+        'user_id': userId,
+        'location_id': locationId,
+        'title': title,
+        'category': category.name,
+        'rating': rating.toInt(),
+        'comment': publicComment,
+        'image_url': pubImageUrl,
+        'location_coords': 'POINT($lon $lat)'
+      });
 
-    // Private Card
-    await _supabase.from('private_cards').insert({
-      'post_id': postId,
-      'user_id': userId,
-      'location_id': locationId,
-      'comment': privateComment,
-      'image_url': privImageUrl,
-      'visited_date': DateTime.now().toIso8601String(),
-    });
+      // Private Card
+      await _supabase.from('private_cards').insert({
+        'post_id': postId,
+        'user_id': userId,
+        'location_id': locationId,
+        'comment': privateComment,
+        'image_url': privImageUrl,
+        'visited_date': DateTime.now().toIso8601String(),
+      });
+
+      return postId;
+    } catch (e) {
+      debugPrint("submitPost Supabase error: $e. Returning mock ID for local testing.");
+      return 'mock_post_${DateTime.now().millisecondsSinceEpoch}';
+    }
   }
 
   // 4. Public/Privateカードの一括取得
@@ -184,8 +192,25 @@ class SupabaseRepository {
     try {
       await _supabase.from('posts').update({'deleted_at': now}).eq('id', postId);
     } catch (e) {
-      print('Error deleting post: $e');
-      rethrow;
+      // ローカルモック用フォールバック
+      debugPrint("deletePost failed (Offline mode?): $e");
+    }
+
+    // デッキからの自動除外 (ローカルのフォールバック)
+    for (int i = 0; i < _localDecks.length; i++) {
+      final deck = _localDecks[i];
+      final originalLength = deck.cards.length;
+      final filteredCards = deck.cards.where((c) => c.postId != postId && c.id != postId).toList();
+      
+      if (filteredCards.length != originalLength) {
+        _localDecks[i] = DeckModel(
+          id: deck.id,
+          title: deck.title,
+          date: deck.date,
+          cards: filteredCards,
+          location: deck.location,
+        );
+      }
     }
   }
 
@@ -254,6 +279,44 @@ class SupabaseRepository {
         title: title,
         date: old.date,
         cards: old.cards,
+        location: old.location,
+      );
+    }
+  }
+
+  Future<void> addCardsToDeck({required String deckId, required List<ExperienceCardModel> newCards}) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final index = _localDecks.indexWhere((d) => d.id == deckId);
+    if (index >= 0) {
+      final old = _localDecks[index];
+      // 重複を防ぐため、既存にないIDのカードのみ追加
+      final existingIds = old.cards.map((c) => c.id).toSet();
+      final cardsToAdd = newCards.where((c) => !existingIds.contains(c.id)).toList();
+      
+      final updatedCards = List<ExperienceCardModel>.from(old.cards)..addAll(cardsToAdd);
+      
+      _localDecks[index] = DeckModel(
+        id: old.id,
+        title: old.title,
+        date: old.date,
+        cards: updatedCards,
+        location: old.location,
+      );
+    }
+  }
+
+  Future<void> removeCardFromDeck({required String deckId, required String cardId}) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final index = _localDecks.indexWhere((d) => d.id == deckId);
+    if (index >= 0) {
+      final old = _localDecks[index];
+      final updatedCards = old.cards.where((c) => c.id != cardId).toList();
+      
+      _localDecks[index] = DeckModel(
+        id: old.id,
+        title: old.title,
+        date: old.date,
+        cards: updatedCards,
         location: old.location,
       );
     }

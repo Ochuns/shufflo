@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'deck_model.dart';
+import 'experience_card_model.dart';
 import 'supabase_repository.dart';
 
 class DecksNotifier extends AsyncNotifier<List<DeckModel>> {
@@ -21,6 +22,20 @@ class DecksNotifier extends AsyncNotifier<List<DeckModel>> {
   Future<void> updateDeck(String deckId, String title) async {
     final repo = ref.read(supabaseRepositoryProvider);
     await repo.updateDeck(deckId: deckId, title: title);
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> addCardsToDeck(String deckId, List<ExperienceCardModel> cards) async {
+    final repo = ref.read(supabaseRepositoryProvider);
+    await repo.addCardsToDeck(deckId: deckId, newCards: cards);
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> removeCardFromDeck(String deckId, String cardId) async {
+    final repo = ref.read(supabaseRepositoryProvider);
+    await repo.removeCardFromDeck(deckId: deckId, cardId: cardId);
     ref.invalidateSelf();
     await future;
   }
