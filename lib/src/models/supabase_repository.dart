@@ -59,6 +59,7 @@ class SupabaseRepository {
     String? privateImagePath,
     double? latitude,
     double? longitude,
+    String? deckId,
   }) async {
     await _ensureUserExists();
 
@@ -113,6 +114,7 @@ class SupabaseRepository {
         'post_id': postId,
         'user_id': userId,
         'location_id': locationId,
+        'deck_id': deckId,
         'comment': privateComment,
         'image_url': privImageUrl,
         'visited_date': DateTime.now().toIso8601String(),

@@ -22,27 +22,26 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     double? longitude,
     String? deckId,
   }) async {
-    final repo = ref.read(supabaseRepositoryProvider);
-    final postId = await repo.submitPost(
-      title: title,
-      category: category,
-      rating: rating,
-      publicComment: publicComment,
-      privateComment: privateComment,
-      publicImagePath: publicImagePath,
-      privateImagePath: privateImagePath,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    ref.invalidateSelf();
-    final newCards = await future;
+    try {
+      final repo = ref.read(supabaseRepositoryProvider);
+      await repo.submitPost(
+        title: title,
+        category: category,
+        rating: rating,
+        publicComment: publicComment,
+        privateComment: privateComment,
+        publicImagePath: publicImagePath,
+        privateImagePath: privateImagePath,
+        latitude: latitude,
+        longitude: longitude,
+        deckId: deckId,
+      );
 
-    if (deckId != null && postId.isNotEmpty) {
-      final newCard = newCards.where((c) => c.postId == postId || c.id == postId).firstOrNull;
-      if (newCard != null) {
-        await ref.read(decksProvider.notifier).addCardsToDeck(deckId, [newCard]);
-        // addCardsToDeck already invalidates decksProvider, so we don't need to do it again here.
-      }
+      ref.invalidateSelf();
+      ref.invalidate(decksProvider); // デッキ一覧を最新に更新
+      await future;
+    } catch (e) {
+      rethrow;
     }
   }
 
