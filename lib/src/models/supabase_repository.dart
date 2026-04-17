@@ -271,7 +271,7 @@ class SupabaseRepository {
             isPublic: false,
             localImagePath: null,
             rarity: CardRarity.values.firstWhere((e) => e.name == (postData?['rarity'] ?? 'common'), orElse: () => CardRarity.common),
-            createdAt: pc['created_at'] != null ? DateTime.parse(pc['created_at']).toLocal() : null,
+            createdAt: pc['visited_date'] != null ? DateTime.parse(pc['visited_date']).toLocal() : null,
           ));
         }
 
