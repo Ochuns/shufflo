@@ -111,18 +111,31 @@ class TcgCardEditorFront extends StatelessWidget {
                           controller: titleController,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 14, // 文字を小さく
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 1.1,
                           ),
                           maxLength: 20,
-                          decoration: const InputDecoration(
-                            hintText: 'Enter title...',
-                            hintStyle: TextStyle(color: Colors.white38),
-                            border: InputBorder.none,
+                          decoration: InputDecoration(
+                            hintText: 'Enter title',
+                            hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12), // もう少し丸みを持たせる
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(color: Colors.white, width: 1.5),
+                            ),
+                            fillColor: Colors.black26,
+                            filled: true,
                             isDense: true,
                             counterText: '',
-                            contentPadding: EdgeInsets.zero,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                           ),
                         ),
                       ),
@@ -334,18 +347,33 @@ class TcgCardEditorBack extends StatelessWidget {
                       Expanded(
                         child: TextField(
                           controller: titleController,
-                          // 裏面ではタイトル固定（編集不可）にする場合は readOnly: true にする
-                          readOnly: true,
+                          maxLength: 20,
+                          decoration: InputDecoration(
+                            hintText: 'Enter title',
+                            hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(color: Colors.white, width: 1.5),
+                            ),
+                            counterText: '',
+                            fillColor: Colors.black26,
+                            filled: true,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          ),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 14, 
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 1.1,
-                          ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
                           ),
                         ),
                       ),

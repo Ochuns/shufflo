@@ -229,13 +229,21 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
               Center(
                 child: Column(
                   children: [
-                    Text(
-                      _isFront ? 'Editing: PUBLIC SIDE' : 'Editing: PRIVATE SIDE',
-                      style: TextStyle(
-                        color: _isFront ? Colors.lightBlueAccent : Colors.purpleAccent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2.0,
+                    Container(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFEF5350), width: 3), // 淡めの赤でマーカーライン
+                        ),
+                      ),
+                      child: Text(
+                        _isFront ? 'Editing: PUBLIC SIDE' : 'Editing: PRIVATE SIDE',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.0,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -301,7 +309,7 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Icon(
                         starValue <= _rating ? Icons.star : Icons.star_border,
-                        color: const Color(0xFFFF6B6B),
+                        color: Colors.amberAccent,
                         size: 40,
                       ),
                     ),
@@ -343,11 +351,11 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
               const SizedBox(height: 32),
               
               _isLoading 
-                  ? const Center(child: CircularProgressIndicator(color: Colors.amberAccent))
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
                   : ElevatedButton(
                       onPressed: _submitCard,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amberAccent.shade700,
+                        backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
