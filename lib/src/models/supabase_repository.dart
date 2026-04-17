@@ -291,8 +291,7 @@ class SupabaseRepository {
 
   Future<void> createDeck({required String title}) async {
     await _ensureUserExists();
-    final userId = currentUserId;
-    if (userId == null) return;
+    final userId = currentUserId!;
     
     await _supabase.from('decks').insert({
       'user_id': userId,
