@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import '../../models/supabase_repository.dart';
+import '../../models/deck_model.dart';
+import '../../models/decks_provider.dart';
 import '../../common_widgets/tcg_card_view.dart';
 
 class CardDetailScreen extends ConsumerWidget {
   final ExperienceCardModel model;
+  final bool showAppBar;
 
-  const CardDetailScreen({super.key, required this.model});
+  const CardDetailScreen({
+    super.key, 
+    required this.model,
+    this.showAppBar = true,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // プロバイダーから最新のリストを取得し、このカードの最新情報を探す
     final cardsAsync = ref.watch(cardsProvider);
+    final decksAsync = ref.watch(decksProvider);
     
     return cardsAsync.when(
       data: (cards) {
@@ -27,13 +36,24 @@ class CardDetailScreen extends ConsumerWidget {
         final currentUserId = ref.watch(supabaseRepositoryProvider).currentUserId;
         final isOwner = latestModel.authorId == currentUserId;
 
+        // このカードが所属しているデッキを探す
+        final parentDeck = decksAsync.value?.where((d) => 
+          d.cards.any((c) => c.id == latestModel.id || c.postId == latestModel.postId)
+        ).firstOrNull;
+
         return Scaffold(
           backgroundColor: const Color(0xFF121212), 
-          appBar: AppBar(
+          appBar: showAppBar ? AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
             actions: [
+              if (parentDeck != null)
+                IconButton(
+                  icon: const Icon(Icons.layers_outlined),
+                  onPressed: () => context.push('/deck_playback', extra: parentDeck),
+                  tooltip: 'View in Deck',
+                ),
               if (isOwner) ...[
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
@@ -48,12 +68,17 @@ class CardDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
               ],
             ],
-          ),
+          ) : null,
           extendBodyBehindAppBar: true,
           body: SafeArea(
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: EdgeInsets.only(
+                  left: 24, 
+                  right: 24, 
+                  bottom: 16,
+                  top: showAppBar ? 16 : 72, // AppBarがない（デッキ内）場合は上部余白を取る
+                ),
                 child: TcgCardView(model: latestModel),
               ),
             ),
@@ -64,9 +89,9 @@ class CardDetailScreen extends ConsumerWidget {
         backgroundColor: Color(0xFF121212),
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => Scaffold(
+      error: (e, st) => Scaffold(
         backgroundColor: const Color(0xFF121212),
-        body: Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white))),
+        body: Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
       ),
     );
   }
@@ -81,7 +106,7 @@ class CardDetailScreen extends ConsumerWidget {
         title: const Text('Delete Card?', style: TextStyle(color: Colors.white)),
         content: Text(
           canDelete
-              ? 'This card and its public posts will be moved to your history and not be visible to others. This action can be undone later.'
+              ? 'This card and its public posts will be moved to your history and not be visible to others. It will also be removed from any decks it belongs to.'
               : 'This card cannot be deleted because it does not have a post ID.',
           style: const TextStyle(color: Colors.white70),
         ),
@@ -127,9 +152,6 @@ class CardDetailScreen extends ConsumerWidget {
   void _showEditSheet(BuildContext context, WidgetRef ref, ExperienceCardModel targetModel) {
     final titleController = TextEditingController(text: targetModel.title);
     final publicCommentController = TextEditingController(text: targetModel.comment);
-    // Ideally, for private cards, we should fetch the original post details or maintain the private comment in the model.
-    // Since our model is combined, let's assume 'comment' currently holds the context-relevant comment.
-    // For now, in this MVP, we'll edit title and the primary comment.
     
     showModalBottomSheet(
       context: context,
@@ -203,7 +225,7 @@ class CardDetailScreen extends ConsumerWidget {
                     category: targetModel.category,
                     rating: targetModel.rating,
                     publicComment: publicCommentController.text,
-                    privateComment: publicCommentController.text, // Simplified for MVP
+                    privateComment: publicCommentController.text, 
                   );
                   if (context.mounted) Navigator.pop(context);
                 }

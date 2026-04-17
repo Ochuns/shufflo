@@ -59,3 +59,5 @@ final DeckModel mockDemoDeck = DeckModel(
   cards: initialMockCards,
   location: 'Kyoto, Japan',
 );
+
+final List<DeckModel> initialMockDecks = [mockDemoDeck];

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'experience_card_model.dart';
 import 'supabase_repository.dart';
+import 'decks_provider.dart';
 
 class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
   @override
@@ -19,9 +20,10 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     String? privateImagePath,
     double? latitude,
     double? longitude,
+    String? deckId,
   }) async {
     final repo = ref.read(supabaseRepositoryProvider);
-    await repo.submitPost(
+    final postId = await repo.submitPost(
       title: title,
       category: category,
       rating: rating,
@@ -33,13 +35,22 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
       longitude: longitude,
     );
     ref.invalidateSelf();
-    await future;
+    final newCards = await future;
+
+    if (deckId != null && postId.isNotEmpty) {
+      final newCard = newCards.where((c) => c.postId == postId || c.id == postId).firstOrNull;
+      if (newCard != null) {
+        await ref.read(decksProvider.notifier).addCardsToDeck(deckId, [newCard]);
+        // addCardsToDeck already invalidates decksProvider, so we don't need to do it again here.
+      }
+    }
   }
 
   Future<void> deleteCard(String postId) async {
     final repo = ref.read(supabaseRepositoryProvider);
     await repo.deletePost(postId);
     ref.invalidateSelf();
+    ref.invalidate(decksProvider); // デッキからも削除されたことをUIに即座に反映
     await future;
   }
 

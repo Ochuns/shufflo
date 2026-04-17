@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
+import '../../models/decks_provider.dart';
 import '../../utils/exif_utils.dart';
 import 'package:go_router/go_router.dart';
 
@@ -49,6 +50,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     }
   }
 
+  String? _selectedDeckId;
   bool _isLoading = false;
 
   Future<void> _submitCard() async {
@@ -70,6 +72,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         privateImagePath: _privateImagePath,
         latitude: _latitude,
         longitude: _longitude,
+        deckId: _selectedDeckId,
       );
 
       if (!mounted) return;
@@ -81,6 +84,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         _publicCommentController.clear();
         _privateCommentController.clear();
         _selectedCategory = null;
+        _selectedDeckId = null;
         _rating = 3.0;
         _publicImagePath = null;
         _privateImagePath = null;
@@ -153,6 +157,8 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final decksAsync = ref.watch(decksProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Card', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -198,8 +204,35 @@ class _PostScreenState extends ConsumerState<PostScreen> {
               }).toList(),
               onChanged: (val) => setState(() => _selectedCategory = val),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            decksAsync.when(
+              data: (decks) {
+                if (decks.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  children: [
+                    DropdownButtonFormField<String?>(
+                      decoration: const InputDecoration(
+                        labelText: 'Add to Deck (Optional)',
+                        hintText: 'Select a deck to add this card to',
+                      ),
+                      value: _selectedDeckId,
+                      items: [
+                        const DropdownMenuItem<String?>(value: null, child: Text('None')),
+                        ...decks.map((d) => DropdownMenuItem<String?>(value: d.id, child: Text(d.title))).toList(),
+                      ],
+                      onChanged: (val) => setState(() => _selectedDeckId = val),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              },
+              loading: () => const CircularProgressIndicator(),
+              error: (_, __) => const Text('Failed to load decks'),
+            ),
             
+            const SizedBox(height: 8),
+            // ... Rating section ...
             const Text('Rating', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
