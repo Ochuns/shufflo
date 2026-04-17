@@ -113,7 +113,10 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         _rating = 3.0;
         _publicImagePath = null;
         _privateImagePath = null;
-        if (!_isFront) _toggleFlip(swipeRight: true); // 表面に戻す
+        if (!_isFront) {
+          _isFront = true;
+          _targetAngle = 0;
+        }
       });
     } catch (e) {
       if (!mounted) return;
