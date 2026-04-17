@@ -1,12 +1,14 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import '../../models/decks_provider.dart';
 import '../../utils/exif_utils.dart';
-import 'package:go_router/go_router.dart';
+import 'widgets/tcg_card_editor_components.dart';
 
 class PostScreen extends ConsumerStatefulWidget {
   const PostScreen({super.key});
@@ -31,6 +33,27 @@ class _PostScreenState extends ConsumerState<PostScreen> {
   double? _latitude;
   double? _longitude;
 
+  String? _selectedDeckId;
+  bool _isLoading = false;
+
+  double _targetAngle = 0.0;
+  bool _isFront = true;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _publicCommentController.dispose();
+    _privateCommentController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFlip({bool swipeRight = true}) {
+    setState(() {
+      _targetAngle += swipeRight ? -pi : pi;
+      _isFront = ( _targetAngle / pi ).round() % 2 == 0;
+    });
+  }
+
   Future<void> _pickImage(bool isPublic) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, requestFullMetadata: true);
     if (image != null) {
@@ -50,12 +73,14 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     }
   }
 
-  String? _selectedDeckId;
-  bool _isLoading = false;
-
   Future<void> _submitCard() async {
     if (_titleController.text.isEmpty || _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill out the title and category.')));
+      return;
+    }
+
+    if (_publicImagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please pick a public photo.')));
       return;
     }
 
@@ -88,6 +113,10 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         _rating = 3.0;
         _publicImagePath = null;
         _privateImagePath = null;
+        if (!_isFront) {
+          _isFront = true;
+          _targetAngle = 0;
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -100,171 +129,218 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     }
   }
 
-  Widget _buildImageUploader(String label, String? imagePath, bool isPublic) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () => _pickImage(isPublic),
-          child: Container(
-            height: 120, // 以前は180。高さを下げてより横長な（アスペクト比の大きい）エリアにする
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade300, width: 2),
-              image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover) : null,
-            ),
-            child: imagePath == null
-                ? const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
-                      SizedBox(height: 8),
-                      Text('Upload Image', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                    ],
-                  )
-                : null,
-          ),
-        ),
-        if (isPublic && imagePath != null) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                _latitude != null ? Icons.location_on : Icons.location_off,
-                size: 16,
-                color: _latitude != null ? Colors.green : Colors.grey,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _latitude != null 
-                  ? '📍 位置情報を写真から取得しました' 
-                  : '⚠️ 写真に位置情報が見つかりません',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: _latitude != null ? Colors.green.shade700 : Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final decksAsync = ref.watch(decksProvider);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Create Card', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Design Card', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
         backgroundColor: Colors.transparent,
+        elevation: 0,
         surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildImageUploader('Public Photo', _publicImagePath, true),
-            const SizedBox(height: 24),
-            
-            _buildImageUploader('Private Photo', _privateImagePath, false),
-            const SizedBox(height: 24),
-            
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Awesome Cafe'),
-            ),
-            const SizedBox(height: 16),
-            
-            TextFormField(
-              controller: _publicCommentController,
-              decoration: const InputDecoration(labelText: 'Public Comment', hintText: 'For everyone to see'),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ===== 3D Flip Card Editor =====
+              GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 300) {
+                    bool swipeRight = details.primaryVelocity! > 0;
+                    _toggleFlip(swipeRight: swipeRight);
+                  }
+                },
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(end: _targetAngle),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) {
+                    bool isFrontSide = (value / pi).round() % 2 == 0;
 
-            TextFormField(
-              controller: _privateCommentController,
-              decoration: const InputDecoration(labelText: 'Private Comment', hintText: 'Your secret memories'),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            
-            DropdownButtonFormField<ExperienceCategory>(
-              decoration: const InputDecoration(labelText: 'Category'),
-              value: _selectedCategory,
-              items: ExperienceCategory.values.map((cat) {
-                return DropdownMenuItem(value: cat, child: Text(cat.label));
-              }).toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val),
-            ),
-            const SizedBox(height: 16),
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.0015) 
+                        ..rotateY(value),
+                      child: isFrontSide
+                          ? TcgCardEditorFront(
+                              titleController: _titleController,
+                              commentController: _publicCommentController,
+                              selectedCategory: _selectedCategory ?? ExperienceCategory.other,
+                              rating: _rating,
+                              imagePath: _publicImagePath,
+                              onPickImage: () => _pickImage(true),
+                            )
+                          : Transform(
+                              // 裏面はY軸でもう180度回転させて鏡文字を防ぐ
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()..rotateY(pi),
+                              child: TcgCardEditorBack(
+                                titleController: _titleController,
+                                commentController: _privateCommentController,
+                                selectedCategory: _selectedCategory ?? ExperienceCategory.other,
+                                rating: _rating,
+                                imagePath: _privateImagePath,
+                                onPickImage: () => _pickImage(false),
+                              ),
+                            ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_isFront && _publicImagePath != null && _latitude == null)
+                const Center(
+                  child: Text('⚠️ Public Photo has no location data.', style: TextStyle(color: Colors.amber, fontSize: 12)),
+                ),
+              const SizedBox(height: 8),
 
-            decksAsync.when(
-              data: (decks) {
-                if (decks.isEmpty) return const SizedBox.shrink();
-                return Column(
+              // ===== Controls Below Card =====
+              Center(
+                child: Column(
                   children: [
-                    DropdownButtonFormField<String?>(
-                      decoration: const InputDecoration(
-                        labelText: 'Add to Deck (Optional)',
-                        hintText: 'Select a deck to add this card to',
+                    Container(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFEF5350), width: 3), // 淡めの赤でマーカーライン
+                        ),
                       ),
-                      value: _selectedDeckId,
-                      items: [
-                        const DropdownMenuItem<String?>(value: null, child: Text('None')),
-                        ...decks.map((d) => DropdownMenuItem<String?>(value: d.id, child: Text(d.title))).toList(),
-                      ],
-                      onChanged: (val) => setState(() => _selectedDeckId = val),
+                      child: Text(
+                        _isFront ? 'Editing: PUBLIC SIDE' : 'Editing: PRIVATE SIDE',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isFront ? 'This side will be visible on the feed.' : 'This side is your personal secret journal.',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                  ],
-                );
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (_, __) => const Text('Failed to load decks'),
-            ),
-            
-            const SizedBox(height: 8),
-            // ... Rating section ...
-            const Text('Rating', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Row(
-              children: List.generate(5, (index) {
-                final starValue = index + 1;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _rating = starValue.toDouble();
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Icon(
-                      starValue <= _rating ? Icons.star : Icons.star_border,
-                      color: const Color(0xFFFF6B6B),
-                      size: 40,
+                    FilledButton.tonalIcon(
+                      onPressed: () => _toggleFlip(swipeRight: true),
+                      icon: const Icon(LucideIcons.repeat),
+                      label: Text(_isFront ? 'Flip to Private Side' : 'Flip to Public Side'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.1),
+                        foregroundColor: Colors.white,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // UI Element for picking category (Restored)
+              DropdownButtonFormField<ExperienceCategory>(
+                dropdownColor: const Color(0xFF2A2A2A),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
                   ),
-                );
-              }),
-            ),
-            const SizedBox(height: 32),
-            
-            _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: _submitCard,
-                    child: const Text('Create Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                   ),
-            const SizedBox(height: 48),
-          ],
+                ),
+                value: _selectedCategory,
+                items: ExperienceCategory.values.map((cat) {
+                  return DropdownMenuItem(value: cat, child: Text(cat.label));
+                }).toList(),
+                onChanged: (val) => setState(() => _selectedCategory = val),
+              ),
+              const SizedBox(height: 16),
+
+              // UI Element for rating (Restored)
+              const Text('Rating', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white70)),
+              const SizedBox(height: 8),
+              Row(
+                children: List.generate(5, (index) {
+                  final starValue = index + 1;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _rating = starValue.toDouble();
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Icon(
+                        starValue <= _rating ? Icons.star : Icons.star_border,
+                        color: Colors.amberAccent,
+                        size: 40,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 32),
+
+              decksAsync.when(
+                data: (decks) {
+                  if (decks.isEmpty) return const SizedBox.shrink();
+                  return DropdownButtonFormField<String>(
+                    dropdownColor: const Color(0xFF2A2A2A),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Add to Deck (Optional)',
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                      ),
+                    ),
+                    value: _selectedDeckId,
+                    items: [
+                      const DropdownMenuItem<String>(value: null, child: Text('None')),
+                      ...decks.map((d) => DropdownMenuItem(value: d.id, child: Text(d.title))).toList(),
+                    ],
+                    onChanged: (val) => setState(() => _selectedDeckId = val),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => const Text('Failed to load decks', style: TextStyle(color: Colors.red)),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              _isLoading 
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : ElevatedButton(
+                      onPressed: _submitCard,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Create Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+              const SizedBox(height: 48),
+            ],
+          ),
         ),
       ),
     );

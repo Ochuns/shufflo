@@ -23,7 +23,6 @@ class CardDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // プロバイダーから最新のリストを取得し、このカードの最新情報を探す
     final cardsAsync = ref.watch(cardsProvider);
-    final decksAsync = ref.watch(decksProvider);
     
     return cardsAsync.when(
       data: (cards) {
@@ -36,11 +35,6 @@ class CardDetailScreen extends ConsumerWidget {
         final currentUserId = ref.watch(supabaseRepositoryProvider).currentUserId;
         final isOwner = latestModel.authorId == currentUserId;
 
-        // このカードが所属しているデッキを探す
-        final parentDeck = decksAsync.value?.where((d) => 
-          d.cards.any((c) => c.id == latestModel.id || c.postId == latestModel.postId)
-        ).firstOrNull;
-
         return Scaffold(
           backgroundColor: const Color(0xFF121212), 
           appBar: showAppBar ? AppBar(
@@ -48,12 +42,6 @@ class CardDetailScreen extends ConsumerWidget {
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
             actions: [
-              if (parentDeck != null)
-                IconButton(
-                  icon: const Icon(Icons.layers_outlined),
-                  onPressed: () => context.push('/deck_playback', extra: parentDeck),
-                  tooltip: 'View in Deck',
-                ),
               if (isOwner) ...[
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
