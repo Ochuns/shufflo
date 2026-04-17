@@ -126,33 +126,6 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     }
   }
 
-  void _showCategoryPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Wrap(
-              children: ExperienceCategory.values.map((cat) {
-                return ListTile(
-                  leading: Icon(Icons.star_outline, color: Colors.amberAccent), // Generic icon for picker
-                  title: Text(cat.label, style: const TextStyle(color: Colors.white)),
-                  onTap: () {
-                    setState(() => _selectedCategory = cat);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-        );
-      }
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final decksAsync = ref.watch(decksProvider);
