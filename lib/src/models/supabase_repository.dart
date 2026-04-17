@@ -199,22 +199,8 @@ class SupabaseRepository {
       debugPrint("deletePost failed (Offline mode?): $e");
     }
 
-    // デッキからの自動除外 (ローカルのフォールバック)
-    for (int i = 0; i < _localDecks.length; i++) {
-      final deck = _localDecks[i];
-      final originalLength = deck.cards.length;
-      final filteredCards = deck.cards.where((c) => c.postId != postId && c.id != postId).toList();
-      
-      if (filteredCards.length != originalLength) {
-        _localDecks[i] = DeckModel(
-          id: deck.id,
-          title: deck.title,
-          date: deck.date,
-          cards: filteredCards,
-          location: deck.location,
-        );
-      }
-    }
+    // Supabase上で論理削除されれば、fetchAllDecks時に自動で除外されるため、
+    // ローカル配列での手動データ操作は不要になりました。
   }
 
   // 6. カード（Post）の更新
@@ -247,86 +233,88 @@ class SupabaseRepository {
 
   // --- Decks (Deck management) ---
 
-  // 仮のローカルストレージ（Supabaseテーブルがない場合のフォールバック用）
-  static final List<DeckModel> _localDecks = [...initialMockDecks];
-
   Future<List<DeckModel>> fetchAllDecks() async {
-    // 将来的にはここで _supabase.from('decks').select(...) を呼び出す
-    // 現状はテーブルが未定義のため、初期モック＋追加分を返す
-    await Future.delayed(const Duration(milliseconds: 500)); // 通信シミュレーション
-    return _localDecks;
+    final userId = currentUserId;
+    if (userId == null) return [];
+
+    try {
+      final response = await _supabase
+          .from('decks')
+          .select('''
+            id, title, created_at,
+            private_cards ( *, posts!inner(title, category, rating, rarity), users(username, avatar_url) )
+          ''')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      return response.map<DeckModel>((row) {
+        final privateCardsRaw = row['private_cards'] as List<dynamic>? ?? [];
+        final List<ExperienceCardModel> deckCards = [];
+        
+        for (var pc in privateCardsRaw) {
+          if (pc['deleted_at'] != null) continue; // 論理削除対応
+          
+          final postData = pc['posts'];
+          deckCards.add(ExperienceCardModel(
+            id: pc['id'],
+            postId: pc['post_id'],
+            authorId: pc['user_id'],
+            title: postData?['title'] ?? 'Untitled',
+            imageUrl: pc['image_url'] ?? '',
+            rating: (postData?['rating'] ?? 3).toDouble(),
+            category: ExperienceCategory.values.firstWhere((e) => e.name == postData?['category'], orElse: () => ExperienceCategory.other),
+            comment: pc['comment'] ?? '',
+            authorName: pc['users'] != null ? pc['users']['username'] : 'User',
+            authorAvatarUrl: pc['users'] != null ? pc['users']['avatar_url'] : 'https://i.pravatar.cc/300',
+            isPublic: false,
+            localImagePath: pc['image_url'], 
+            rarity: CardRarity.values.firstWhere((e) => e.name == (postData?['rarity'] ?? 'common'), orElse: () => CardRarity.common),
+            createdAt: pc['created_at'] != null ? DateTime.parse(pc['created_at']).toLocal() : null,
+          ));
+        }
+
+        return DeckModel(
+          id: row['id'],
+          title: row['title'],
+          date: DateTime.parse(row['created_at']).toLocal(),
+          cards: deckCards,
+          location: 'No Location', // ハードコード
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('fetchAllDecks Error: $e');
+      return [];
+    }
   }
 
   Future<void> createDeck({required String title}) async {
-    // 将来的にはここで _supabase.from('decks').insert(...)
-    await Future.delayed(const Duration(milliseconds: 500));
+    final userId = currentUserId;
+    if (userId == null) return;
     
-    final newDeck = DeckModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      date: DateTime.now(),
-      cards: [], // 新規作成時は空
-      location: 'No Location Yet',
-    );
-    _localDecks.insert(0, newDeck);
+    await _supabase.from('decks').insert({
+      'user_id': userId,
+      'title': title,
+    });
   }
 
   Future<void> updateDeck({required String deckId, required String title}) async {
-    // 将来的にはここで _supabase.from('decks').update({'title': title}).eq('id', deckId)
-    await Future.delayed(const Duration(milliseconds: 500));
-    final index = _localDecks.indexWhere((d) => d.id == deckId);
-    if (index >= 0) {
-      final old = _localDecks[index];
-      _localDecks[index] = DeckModel(
-        id: old.id,
-        title: title,
-        date: old.date,
-        cards: old.cards,
-        location: old.location,
-      );
-    }
+    await _supabase.from('decks').update({'title': title}).eq('id', deckId);
   }
 
   Future<void> addCardsToDeck({required String deckId, required List<ExperienceCardModel> newCards}) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final index = _localDecks.indexWhere((d) => d.id == deckId);
-    if (index >= 0) {
-      final old = _localDecks[index];
-      // 重複を防ぐため、既存にないIDのカードのみ追加
-      final existingIds = old.cards.map((c) => c.id).toSet();
-      final cardsToAdd = newCards.where((c) => !existingIds.contains(c.id)).toList();
-      
-      final updatedCards = List<ExperienceCardModel>.from(old.cards)..addAll(cardsToAdd);
-      
-      _localDecks[index] = DeckModel(
-        id: old.id,
-        title: old.title,
-        date: old.date,
-        cards: updatedCards,
-        location: old.location,
-      );
-    }
+    if (newCards.isEmpty) return;
+    final cardIds = newCards.map((c) => c.id).toList();
+    // 指定したカードの所属先を対象のデッキに上書き
+    await _supabase.from('private_cards').update({'deck_id': deckId}).inFilter('id', cardIds);
   }
 
   Future<void> removeCardFromDeck({required String deckId, required String cardId}) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final index = _localDecks.indexWhere((d) => d.id == deckId);
-    if (index >= 0) {
-      final old = _localDecks[index];
-      final updatedCards = old.cards.where((c) => c.id != cardId).toList();
-      
-      _localDecks[index] = DeckModel(
-        id: old.id,
-        title: old.title,
-        date: old.date,
-        cards: updatedCards,
-        location: old.location,
-      );
-    }
+    // デッキIDをnullに戻すことでデッキから外す
+    await _supabase.from('private_cards').update({'deck_id': null}).eq('id', cardId).eq('deck_id', deckId);
   }
 
   Future<void> deleteDeck(String deckId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _localDecks.removeWhere((d) => d.id == deckId);
+    // デッキを削除するとON DELETE SET NULL（または CASCADE）により関連は自動処理される
+    await _supabase.from('decks').delete().eq('id', deckId);
   }
 }

@@ -5,8 +5,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import '../../models/supabase_repository.dart';
-import '../../models/deck_model.dart';
-import '../../models/decks_provider.dart';
 import '../../common_widgets/tcg_card_view.dart';
 
 class CardDetailScreen extends ConsumerWidget {
