@@ -17,7 +17,7 @@ class PostScreen extends ConsumerStatefulWidget {
   ConsumerState<PostScreen> createState() => _PostScreenState();
 }
 
-class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProviderStateMixin {
+class _PostScreenState extends ConsumerState<PostScreen> {
   final _titleController = TextEditingController();
   final _publicCommentController = TextEditingController();
   final _privateCommentController = TextEditingController();
