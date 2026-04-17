@@ -36,37 +36,21 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
   String? _selectedDeckId;
   bool _isLoading = false;
 
-  late AnimationController _flipController;
-  late Animation<double> _flipAnimation;
+  double _targetAngle = 0.0;
   bool _isFront = true;
 
   @override
-  void initState() {
-    super.initState();
-    _flipController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
-    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
   void dispose() {
-    _flipController.dispose();
     _titleController.dispose();
     _publicCommentController.dispose();
     _privateCommentController.dispose();
     super.dispose();
   }
 
-  void _toggleFlip() {
-    if (_isFront) {
-      _flipController.forward();
-    } else {
-      _flipController.reverse();
-    }
+  void _toggleFlip({bool swipeRight = true}) {
     setState(() {
-      _isFront = !_isFront;
+      _targetAngle += swipeRight ? -pi : pi;
+      _isFront = ( _targetAngle / pi ).round() % 2 == 0;
     });
   }
 
@@ -129,7 +113,7 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
         _rating = 3.0;
         _publicImagePath = null;
         _privateImagePath = null;
-        if (!_isFront) _toggleFlip(); // 表面に戻す
+        if (!_isFront) _toggleFlip(swipeRight: true); // 表面に戻す
       });
     } catch (e) {
       if (!mounted) return;
@@ -189,41 +173,50 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ===== 3D Flip Card Editor =====
-              AnimatedBuilder(
-                animation: _flipAnimation,
-                builder: (context, child) {
-                  final value = _flipAnimation.value * pi;
-                  bool isFrontSide = value < (pi / 2) || value > (3 * pi / 2);
+              GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 300) {
+                    bool swipeRight = details.primaryVelocity! > 0;
+                    _toggleFlip(swipeRight: swipeRight);
+                  }
+                },
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(end: _targetAngle),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) {
+                    bool isFrontSide = (value / pi).round() % 2 == 0;
 
-                  return Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.0015) 
-                      ..rotateY(value),
-                    child: isFrontSide
-                        ? TcgCardEditorFront(
-                            titleController: _titleController,
-                            commentController: _publicCommentController,
-                            selectedCategory: _selectedCategory ?? ExperienceCategory.other,
-                            rating: _rating,
-                            imagePath: _publicImagePath,
-                            onPickImage: () => _pickImage(true),
-                          )
-                        : Transform(
-                            // 裏面はY軸でもう180度回転させて鏡文字を防ぐ
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()..rotateY(pi),
-                            child: TcgCardEditorBack(
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.0015) 
+                        ..rotateY(value),
+                      child: isFrontSide
+                          ? TcgCardEditorFront(
                               titleController: _titleController,
-                              commentController: _privateCommentController,
+                              commentController: _publicCommentController,
                               selectedCategory: _selectedCategory ?? ExperienceCategory.other,
                               rating: _rating,
-                              imagePath: _privateImagePath,
-                              onPickImage: () => _pickImage(false),
+                              imagePath: _publicImagePath,
+                              onPickImage: () => _pickImage(true),
+                            )
+                          : Transform(
+                              // 裏面はY軸でもう180度回転させて鏡文字を防ぐ
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()..rotateY(pi),
+                              child: TcgCardEditorBack(
+                                titleController: _titleController,
+                                commentController: _privateCommentController,
+                                selectedCategory: _selectedCategory ?? ExperienceCategory.other,
+                                rating: _rating,
+                                imagePath: _privateImagePath,
+                                onPickImage: () => _pickImage(false),
+                              ),
                             ),
-                          ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 8),
               if (_isFront && _publicImagePath != null && _latitude == null)
@@ -255,7 +248,7 @@ class _PostScreenState extends ConsumerState<PostScreen> with SingleTickerProvid
                     ),
                     const SizedBox(height: 16),
                     FilledButton.tonalIcon(
-                      onPressed: _toggleFlip,
+                      onPressed: () => _toggleFlip(swipeRight: true),
                       icon: const Icon(LucideIcons.repeat),
                       label: Text(_isFront ? 'Flip to Private Side' : 'Flip to Public Side'),
                       style: FilledButton.styleFrom(
