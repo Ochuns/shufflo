@@ -290,6 +290,7 @@ class SupabaseRepository {
   }
 
   Future<void> createDeck({required String title}) async {
+    await _ensureUserExists();
     final userId = currentUserId;
     if (userId == null) return;
     
