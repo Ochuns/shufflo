@@ -269,7 +269,7 @@ class SupabaseRepository {
             authorName: pc['users'] != null ? pc['users']['username'] : 'User',
             authorAvatarUrl: pc['users'] != null ? pc['users']['avatar_url'] : 'https://i.pravatar.cc/300',
             isPublic: false,
-            localImagePath: pc['image_url'], 
+            localImagePath: null,
             rarity: CardRarity.values.firstWhere((e) => e.name == (postData?['rarity'] ?? 'common'), orElse: () => CardRarity.common),
             createdAt: pc['created_at'] != null ? DateTime.parse(pc['created_at']).toLocal() : null,
           ));
