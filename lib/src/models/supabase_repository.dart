@@ -39,10 +39,9 @@ class SupabaseRepository {
       // 重複を防ぐため一意なファイル名を生成 (タイムスタンプ + 元の拡張子)
       final extension = p.extension(localPath);
       final fileName = 'img_${DateTime.now().microsecondsSinceEpoch}$extension';
-      
+
       final newPath = p.join(imagesDir.path, fileName);
       await file.copy(newPath);
-      
       // DBにはファイル名のみを保存するためにベースネームを返す
       return fileName;
     } catch (e) {
