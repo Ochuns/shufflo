@@ -293,27 +293,32 @@ class _CardArtImage extends StatefulWidget {
 }
 
 class _CardArtImageState extends State<_CardArtImage> {
-  late Future<bool> _hasLocalImageFuture;
+  late Future<_LocalImageCheckResult> _localImageCheckFuture;
 
   @override
   void initState() {
     super.initState();
-    _hasLocalImageFuture = _hasLocalImage(widget.model.localImagePath);
+    _updateLocalImageCheck(widget.model.localImagePath);
   }
 
   @override
   void didUpdateWidget(covariant _CardArtImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.model.localImagePath != widget.model.localImagePath) {
-      _hasLocalImageFuture = _hasLocalImage(widget.model.localImagePath);
+      _updateLocalImageCheck(widget.model.localImagePath);
     }
   }
 
-  Future<bool> _hasLocalImage(String? localImagePath) async {
+  void _updateLocalImageCheck(String? localImagePath) {
+    _localImageCheckFuture = _checkLocalImage(localImagePath);
+  }
+
+  Future<_LocalImageCheckResult> _checkLocalImage(String? localImagePath) async {
     if (localImagePath == null || localImagePath.isEmpty) {
-      return false;
+      return const _LocalImageCheckResult(localImagePath: null, exists: false);
     }
-    return File(localImagePath).exists();
+    final exists = await File(localImagePath).exists();
+    return _LocalImageCheckResult(localImagePath: localImagePath, exists: exists);
   }
 
   Widget _loadingWidget() {
@@ -354,18 +359,24 @@ class _CardArtImageState extends State<_CardArtImage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _hasLocalImageFuture,
+    return FutureBuilder<_LocalImageCheckResult>(
+      future: _localImageCheckFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return _loadingWidget();
         }
 
-        if (snapshot.data == true) {
+        if (snapshot.hasError) {
+          return _networkImage();
+        }
+
+        if (snapshot.data?.exists == true &&
+            snapshot.data?.localImagePath != null) {
+          final localImagePath = snapshot.data!.localImagePath!;
           return Image.file(
-            File(widget.model.localImagePath!),
+            File(localImagePath),
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _networkImage(),
+            errorBuilder: (context, error, stackTrace) => _errorWidget(),
           );
         }
 
@@ -373,4 +384,14 @@ class _CardArtImageState extends State<_CardArtImage> {
       },
     );
   }
+}
+
+class _LocalImageCheckResult {
+  final String? localImagePath;
+  final bool exists;
+
+  const _LocalImageCheckResult({
+    required this.localImagePath,
+    required this.exists,
+  });
 }
