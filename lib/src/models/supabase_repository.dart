@@ -28,10 +28,19 @@ class SupabaseRepository {
         await imagesDir.create(recursive: true);
       }
 
-      final fileName = p.basename(localPath);
-      final newPath = '${imagesDir.path}/$fileName';
+      final normalizedSourcePath = p.normalize(file.absolute.path);
+      final normalizedImagesDirPath = p.normalize(imagesDir.absolute.path);
+
+      // すでに保存先ディレクトリ配下のファイルなら、そのままファイル名を返す
+      if (p.dirname(normalizedSourcePath) == normalizedImagesDirPath) {
+        return p.basename(normalizedSourcePath);
+      }
+
+      final extension = p.extension(localPath);
+      final fileName =
+          '${DateTime.now().microsecondsSinceEpoch}$extension';
+      final newPath = p.join(imagesDir.path, fileName);
       await file.copy(newPath);
-      
       // DBにはファイル名のみを保存するためにベースネームを返す
       return fileName;
     } catch (e) {
