@@ -186,61 +186,7 @@ class TcgCardView extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
-                      child: model.localImagePath != null
-                          ? Image.file(
-                              File(model.localImagePath!),
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => CachedNetworkImage(
-                                imageUrl: model.imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Colors.grey.shade900,
-                                  alignment: Alignment.center,
-                                  child: SizedBox(
-                                    width: isCompact ? 18 : 24,
-                                    height: isCompact ? 18 : 24,
-                                    child: const CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey.shade900,
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    Icons.broken_image_outlined,
-                                    color: Colors.white54,
-                                    size: isCompact ? 28 : 40,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : CachedNetworkImage(
-                              imageUrl: model.imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: Colors.grey.shade900,
-                                alignment: Alignment.center,
-                                child: SizedBox(
-                                  width: isCompact ? 18 : 24,
-                                  height: isCompact ? 18 : 24,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey.shade900,
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.broken_image_outlined,
-                                  color: Colors.white54,
-                                  size: isCompact ? 28 : 40,
-                                ),
-                              ),
-                            ),
+                      child: _CardArtImage(model: model, isCompact: isCompact),
                     ),
                   ),
                 ),
@@ -329,6 +275,102 @@ class TcgCardView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CardArtImage extends StatefulWidget {
+  final ExperienceCardModel model;
+  final bool isCompact;
+
+  const _CardArtImage({
+    required this.model,
+    required this.isCompact,
+  });
+
+  @override
+  State<_CardArtImage> createState() => _CardArtImageState();
+}
+
+class _CardArtImageState extends State<_CardArtImage> {
+  late Future<bool> _hasLocalImageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasLocalImageFuture = _hasLocalImage(widget.model.localImagePath);
+  }
+
+  @override
+  void didUpdateWidget(covariant _CardArtImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.model.localImagePath != widget.model.localImagePath) {
+      _hasLocalImageFuture = _hasLocalImage(widget.model.localImagePath);
+    }
+  }
+
+  Future<bool> _hasLocalImage(String? localImagePath) async {
+    if (localImagePath == null || localImagePath.isEmpty) {
+      return false;
+    }
+    return File(localImagePath).exists();
+  }
+
+  Widget _loadingWidget() {
+    return Container(
+      color: Colors.grey.shade900,
+      alignment: Alignment.center,
+      child: SizedBox(
+        width: widget.isCompact ? 18 : 24,
+        height: widget.isCompact ? 18 : 24,
+        child: const CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+        ),
+      ),
+    );
+  }
+
+  Widget _errorWidget() {
+    return Container(
+      color: Colors.grey.shade900,
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.broken_image_outlined,
+        color: Colors.white54,
+        size: widget.isCompact ? 28 : 40,
+      ),
+    );
+  }
+
+  Widget _networkImage() {
+    return CachedNetworkImage(
+      imageUrl: widget.model.imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => _loadingWidget(),
+      errorWidget: (context, url, error) => _errorWidget(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _hasLocalImageFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return _loadingWidget();
+        }
+
+        if (snapshot.data == true) {
+          return Image.file(
+            File(widget.model.localImagePath!),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _networkImage(),
+          );
+        }
+
+        return _networkImage();
+      },
     );
   }
 }
