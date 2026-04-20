@@ -5,6 +5,7 @@ import 'experience_card_model.dart';
 import 'deck_model.dart';
 import 'mock_data.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 
 final supabaseRepositoryProvider = Provider((ref) => SupabaseRepository());
@@ -13,6 +14,31 @@ class SupabaseRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   String? get currentUserId => _supabase.auth.currentUser?.id;
+
+  // ローカル画像をアプリの永続ディレクトリに保存する
+  Future<String?> _saveImagePermanently(String? localPath) async {
+    if (localPath == null || localPath.isEmpty) return null;
+    try {
+      final file = File(localPath);
+      if (!await file.exists()) return null;
+
+      final directory = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${directory.path}/stored-images');
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final fileName = p.basename(localPath);
+      final newPath = '${imagesDir.path}/$fileName';
+      await file.copy(newPath);
+      
+      // DBにはファイル名のみを保存するためにベースネームを返す
+      return fileName;
+    } catch (e) {
+      debugPrint("Error saving image permanently: $e");
+      return null;
+    }
+  }
 
   // 1. ユーザー存在チェック・作成
   Future<void> _ensureUserExists() async {
@@ -65,9 +91,13 @@ class SupabaseRepository {
 
     final userId = currentUserId!;
     
-    // 画像アップロード
+    // 画像アップロード (Storage用)
     final pubImageUrl = await uploadImage(publicImagePath, 'card-images') ?? 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=600&q=80';
     final privImageUrl = await uploadImage(privateImagePath, 'card-images') ?? 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80';
+
+    // 画像の永続保存 (アプリ内フォルダへのコピー)
+    final storedPubFileName = await _saveImagePermanently(publicImagePath);
+    final storedPrivFileName = await _saveImagePermanently(privateImagePath);
 
     // MVP fallback (渋谷駅周辺) if no location
     final lat = latitude ?? 35.6580;
@@ -106,6 +136,7 @@ class SupabaseRepository {
         'rating': rating.toInt(),
         'comment': publicComment,
         'image_url': pubImageUrl,
+        'local_image_path': storedPubFileName,
         'location_coords': 'POINT($lon $lat)'
       });
 
@@ -117,6 +148,7 @@ class SupabaseRepository {
         'deck_id': deckId,
         'comment': privateComment,
         'image_url': privImageUrl,
+        'local_image_path': storedPrivFileName,
         'visited_date': DateTime.now().toIso8601String(),
       });
 
@@ -135,6 +167,10 @@ class SupabaseRepository {
     final List<ExperienceCardModel> cards = [];
     final userId = currentUserId;
 
+    // アプリのデータディレクトリを取得（パス復元用）
+    final directory = await getApplicationDocumentsDirectory();
+    final imagesDirPath = '${directory.path}/stored-images';
+
     // Public Cards
     final pubRes = await _supabase.from('public_cards')
         .select('*, users(username, avatar_url)')
@@ -152,6 +188,7 @@ class SupabaseRepository {
         authorName: row['users'] != null ? row['users']['username'] : 'Explorer',
         authorAvatarUrl: row['users'] != null ? row['users']['avatar_url'] : 'https://i.pravatar.cc/300',
         isPublic: true,
+        localImagePath: row['local_image_path'] != null ? '$imagesDirPath/${row['local_image_path']}' : null,
         rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
         createdAt: row['created_at'] != null ? DateTime.parse(row['created_at']).toLocal() : null,
       ));
@@ -177,7 +214,8 @@ class SupabaseRepository {
           authorName: row['users'] != null ? row['users']['username'] : 'Explorer',
           authorAvatarUrl: row['users'] != null ? row['users']['avatar_url'] : 'https://i.pravatar.cc/300',
           isPublic: false,
-          rarity: CardRarity.values.firstWhere((e) => e.name == (postData?['rarity'] ?? 'common'), orElse: () => CardRarity.common),
+          localImagePath: row['local_image_path'] != null ? '$imagesDirPath/${row['local_image_path']}' : null,
+          rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
           createdAt: row['visited_date'] != null ? DateTime.parse(row['visited_date']).toLocal() : null,
         ));
       }

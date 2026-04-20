@@ -186,7 +186,7 @@ class TcgCardView extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
-                      child: model.localImagePath != null
+                      child: (model.localImagePath != null && File(model.localImagePath!).existsSync())
                           ? Image.file(
                               File(model.localImagePath!),
                               fit: BoxFit.cover,
