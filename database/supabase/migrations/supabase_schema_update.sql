@@ -33,9 +33,15 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('card-images', 'card-images', true)
 ON CONFLICT (id) DO NOTHING;
 
--- 5. Storage のポリシー設定（誰でもアップロード・閲覧可能にする：MVP設定）
+-- 5. Storage のポリシー設定
 CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'card-images');
-CREATE POLICY "Public Insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'card-images');
+CREATE POLICY "Authenticated User Insert" ON storage.objects
+    FOR INSERT
+    WITH CHECK (
+        bucket_id = 'card-images'
+        AND auth.role() = 'authenticated'
+        AND name LIKE auth.uid()::text || '/%'
+    );
 
 -- 6. DBテーブルにローカル保存用の local_image_path カラムを追加
 ALTER TABLE public_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
