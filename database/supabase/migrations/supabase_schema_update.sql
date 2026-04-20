@@ -10,6 +10,12 @@ CREATE TABLE decks (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- RLS（権限管理）の設定
+ALTER TABLE decks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own decks" ON decks
+    FOR ALL USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
 -- 2. 既存のカードテーブルに「所属するデッキ（Deck ID）」を追加
 -- これで個々のカードを特定のデッキにまとめることができます
 ALTER TABLE public_cards ADD COLUMN deck_id UUID REFERENCES decks(id) ON DELETE SET NULL;
