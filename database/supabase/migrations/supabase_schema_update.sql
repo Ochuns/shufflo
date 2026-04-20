@@ -52,3 +52,25 @@ CREATE POLICY "Authenticated User Insert" ON storage.objects
 -- 6. DBテーブルにローカル保存用の local_image_path カラムを追加
 ALTER TABLE public_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
 ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
+
+-- ==========================================
+-- Shufflo Database Update: Logical Delete Permissions
+-- ==========================================
+
+-- カード（Post）の論理削除を許可するポリシーの強化
+DROP POLICY IF EXISTS "Users can manage their own posts" ON posts;
+CREATE POLICY "Users can manage their own posts" ON posts
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own public cards" ON public_cards;
+CREATE POLICY "Users can update their own public cards" ON public_cards
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own private cards" ON private_cards;
+CREATE POLICY "Users can update their own private cards" ON private_cards
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 閲覧ポリシーの微調整（削除済みでも本人なら見れるようにする）
+DROP POLICY IF EXISTS "Anyone can see active posts" ON posts;
+CREATE POLICY "Anyone can see active posts" ON posts
+  FOR SELECT USING (deleted_at IS NULL OR auth.uid() = user_id);
