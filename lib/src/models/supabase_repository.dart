@@ -28,8 +28,17 @@ class SupabaseRepository {
         await imagesDir.create(recursive: true);
       }
 
-      final fileName = p.basename(localPath);
-      final newPath = '${imagesDir.path}/$fileName';
+      // ファイルが既に保存先ディレクトリ内にある場合はコピー不要
+      if (p.isWithin(imagesDir.path, localPath)) {
+        return p.basename(localPath);
+      }
+
+      // 重複を防ぐため一意なファイル名を生成 (タイムスタンプ + 元の拡張子)
+      final timestamp = DateTime.now().microsecondsSinceEpoch;
+      final extension = p.extension(localPath);
+      final fileName = "img_$timestamp$extension";
+      
+      final newPath = p.join(imagesDir.path, fileName);
       await file.copy(newPath);
       
       // DBにはファイル名のみを保存するためにベースネームを返す
