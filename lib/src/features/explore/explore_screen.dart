@@ -169,35 +169,19 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
           // 3. Current Location Button (Floating)
           Positioned(
-            bottom: 200, // Bottom Sheet の少し上に配置
+            bottom: (_isLoadingNearbyCards || _nearbyCards.isNotEmpty) ? 200 : 130, // カードがない時は少し下に配置
             right: 16,
             child: SizedBox(
-              width: 72,
-              height: 72,
+              width: 56,
+              height: 56,
               child: FloatingActionButton(
                 heroTag: 'location_fab',
                 backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 onPressed: () => _goToCurrentLocation(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _isLoadingLocation 
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.my_location, color: Colors.blueAccent, size: 22),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Current\nlocation',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.blueAccent, 
-                        fontWeight: FontWeight.bold, 
-                        fontSize: 8, // 小さく
-                        height: 1.1, // 行間を詰める
-                      ),
-                    ),
-                  ],
-                ),
+                child: _isLoadingLocation 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.my_location, color: Colors.blueAccent, size: 28),
               ),
             ),
           ),
@@ -211,7 +195,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             child: _isLoadingNearbyCards
               ? const Center(child: CircularProgressIndicator())
               : _nearbyCards.isEmpty
-                  ? Center(
+                  ? Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.only(top: 80), // 画面に絶妙に見える位置へ下げる
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         decoration: BoxDecoration(
