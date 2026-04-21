@@ -183,7 +183,7 @@ class SupabaseRepository {
 
     // Public Cards
     final pubRes = await _supabase.from('public_cards')
-        .select('*, users(username, avatar_url)')
+        .select('*, users(username, avatar_url), locations(latitude, longitude)')
         .filter('deleted_at', 'is', null); // 論理削除されていないもののみ
     for (var row in pubRes) {
       cards.add(ExperienceCardModel(
@@ -201,13 +201,15 @@ class SupabaseRepository {
         localImagePath: row['local_image_path'] != null ? '$imagesDirPath/${row['local_image_path']}' : null,
         rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
         createdAt: row['created_at'] != null ? DateTime.parse(row['created_at']).toLocal() : null,
+        latitude: row['locations'] != null ? (row['locations']['latitude'] as num?)?.toDouble() : null,
+        longitude: row['locations'] != null ? (row['locations']['longitude'] as num?)?.toDouble() : null,
       ));
     }
 
     if (userId != null) {
       // Private Cards for the specific user
       final privRes = await _supabase.from('private_cards')
-          .select('*, posts!inner(title, category, rating), users(username, avatar_url)')
+          .select('*, posts!inner(title, category, rating), users(username, avatar_url), locations(latitude, longitude)')
           .eq('user_id', userId)
           .filter('deleted_at', 'is', null); // 論理削除されていないもののみ
       for (var row in privRes) {
@@ -227,6 +229,8 @@ class SupabaseRepository {
           localImagePath: row['local_image_path'] != null ? '$imagesDirPath/${row['local_image_path']}' : null,
           rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
           createdAt: row['visited_date'] != null ? DateTime.parse(row['visited_date']).toLocal() : null,
+          latitude: row['locations'] != null ? (row['locations']['latitude'] as num?)?.toDouble() : null,
+          longitude: row['locations'] != null ? (row['locations']['longitude'] as num?)?.toDouble() : null,
         ));
       }
     }
@@ -234,6 +238,49 @@ class SupabaseRepository {
     // デモ/開発用にデータが空の場合はモックを返す (Supabase未設定時などの対策)
     if (cards.isEmpty) {
       return initialMockCards;
+    }
+
+    return cards;
+  }
+
+  // 近接カードの取得 (PostGIS RPCを使った手法)
+  Future<List<ExperienceCardModel>> fetchNearbyPublicCards(double lat, double lon, {double radiusMeters = 5000, int limit = 5}) async {
+    final List<ExperienceCardModel> cards = [];
+
+    // アプリのデータディレクトリを取得（パス復元用）
+    final directory = await getApplicationDocumentsDirectory();
+    final imagesDirPath = '${directory.path}/stored-images';
+
+    try {
+      final pubRes = await _supabase.rpc('get_nearby_public_cards', params: {
+        'target_lat': lat,
+        'target_lon': lon,
+        'max_dist_meters': radiusMeters,
+        'limit_num': limit,
+      }).select('*, users(username, avatar_url), locations(latitude, longitude)');
+
+      for (var row in pubRes) {
+        cards.add(ExperienceCardModel(
+          id: row['id'],
+          postId: row['post_id'],
+          authorId: row['user_id'],
+          title: row['title'] ?? 'Untitled',
+          imageUrl: row['image_url'] ?? '',
+          rating: (row['rating'] ?? 3).toDouble(),
+          category: ExperienceCategory.values.firstWhere((e) => e.name == row['category'], orElse: () => ExperienceCategory.other),
+          comment: row['comment'] ?? '',
+          authorName: row['users'] != null ? row['users']['username'] : 'Explorer',
+          authorAvatarUrl: row['users'] != null ? row['users']['avatar_url'] : 'https://i.pravatar.cc/300',
+          isPublic: true,
+          localImagePath: row['local_image_path'] != null ? '$imagesDirPath/${row['local_image_path']}' : null,
+          rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
+          createdAt: row['created_at'] != null ? DateTime.parse(row['created_at']).toLocal() : null,
+          latitude: row['locations'] != null ? (row['locations']['latitude'] as num?)?.toDouble() : null,
+          longitude: row['locations'] != null ? (row['locations']['longitude'] as num?)?.toDouble() : null,
+        ));
+      }
+    } catch (e) {
+      debugPrint("fetchNearbyPublicCards failed: $e");
     }
 
     return cards;

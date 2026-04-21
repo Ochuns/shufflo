@@ -65,6 +65,8 @@ class ExperienceCardModel {
   final String? localImagePath;
   final CardRarity rarity;
   final DateTime? createdAt;
+  final double? latitude;
+  final double? longitude;
 
   const ExperienceCardModel({
     required this.id,
@@ -84,5 +86,7 @@ class ExperienceCardModel {
     this.localImagePath,
     this.rarity = CardRarity.common,
     this.createdAt,
+    this.latitude,
+    this.longitude,
   });
 }

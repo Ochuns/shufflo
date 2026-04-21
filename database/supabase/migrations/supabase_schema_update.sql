@@ -52,3 +52,34 @@ CREATE POLICY "Authenticated User Insert" ON storage.objects
 -- 6. DBテーブルにローカル保存用の local_image_path カラムを追加
 ALTER TABLE public_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
 ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
+
+-- ==========================================
+-- Shufflo Database Update: Spatial Query RPC
+-- ==========================================
+
+-- 近くのカードをPostGISの機能で検索し、近い順に返す関数
+CREATE OR REPLACE FUNCTION get_nearby_public_cards(
+  target_lat float,
+  target_lon float,
+  max_dist_meters float,
+  limit_num int
+) RETURNS SETOF public_cards AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM public_cards
+  WHERE deleted_at IS NULL
+    -- ST_DWithin で指定範囲内かどうかをインデックスを使って高速判定
+    AND ST_DWithin(
+          location_coords::geography,
+          ST_Point(target_lon, target_lat)::geography,
+          max_dist_meters
+        )
+  -- ST_Distance で距離順にソート
+  ORDER BY ST_Distance(
+             location_coords::geography,
+             ST_Point(target_lon, target_lat)::geography
+           ) ASC
+  LIMIT limit_num;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

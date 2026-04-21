@@ -7,6 +7,7 @@ import '../../models/cards_provider.dart';
 import '../../common_widgets/experience_card.dart'; // 互換性のため残す
 import '../../common_widgets/tcg_card_view.dart';
 import '../../models/experience_card_model.dart';
+import '../../models/supabase_repository.dart';
 import 'location_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,6 +22,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final MapController _mapController = MapController();
   final PageController _pageController = PageController(viewportFraction: 0.65);
   bool _isLoadingLocation = false;
+  LatLng? _currentLocation;
+  
+  List<ExperienceCardModel> _nearbyCards = [];
+  bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
 
   @override
   void initState() {
@@ -43,14 +48,28 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     setState(() => _isLoadingLocation = false);
 
     if (loc != null) {
+      _currentLocation = loc;
       _mapController.move(loc, 16.5); // 地図の縮尺
+      _fetchNearbyCards(loc);
     } else {
+      setState(() => _isLoadingNearbyCards = false); // エラー時もローディング解除
       if (!isInitial) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('位置情報が許可されていません。設定をご確認ください。')),
         );
       }
     }
+  }
+
+  Future<void> _fetchNearbyCards(LatLng loc) async {
+    setState(() => _isLoadingNearbyCards = true);
+    final repo = ref.read(supabaseRepositoryProvider);
+    final cards = await repo.fetchNearbyPublicCards(loc.latitude, loc.longitude);
+    if (!mounted) return;
+    setState(() {
+      _nearbyCards = cards;
+      _isLoadingNearbyCards = false;
+    });
   }
 
   @override
@@ -61,8 +80,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cardsAsync = ref.watch(cardsProvider);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -82,13 +99,32 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
               MarkerLayer(
                 markers: [
-                  // 仮の初期マーカー
-                  Marker(
-                    point: LatLng(35.6812, 139.7671),
-                    width: 40,
-                    height: 40,
-                    child: const Icon(Icons.location_on, color: Color(0xFFFF6B6B), size: 40),
-                  ),
+                  // 現在地のマーカー（自分の位置）
+                  if (_currentLocation != null)
+                    Marker(
+                      point: _currentLocation!,
+                      width: 24,
+                      height: 24,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 1),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // 近接カードのマーカー
+                  ..._nearbyCards.where((c) => c.latitude != null && c.longitude != null).map((card) {
+                    return Marker(
+                      point: LatLng(card.latitude!, card.longitude!),
+                      width: 40,
+                      height: 40,
+                      child: Icon(Icons.location_on, color: card.category.color, size: 40),
+                    );
+                  }),
                 ],
               ),
             ],
@@ -172,63 +208,62 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             left: 0,
             right: 0,
             height: 480, // TCGカード枠を描画するのに十分な高さ
-            child: cardsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
-              data: (cards) {
-                final publicCards = cards.where((c) => c.isPublic).toList();
-                if (publicCards.isEmpty) return const SizedBox.shrink();
+            child: _isLoadingNearbyCards
+              ? const Center(child: CircularProgressIndicator())
+              : _nearbyCards.isEmpty
+                  ? Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Text('この周辺にはまだカードがありません', style: TextStyle(color: Colors.white)),
+                      ),
+                    )
+                  : PageView.builder(
+                      controller: _pageController,
+                      itemCount: _nearbyCards.length,
+                      itemBuilder: (context, index) {
+                        return AnimatedBuilder(
+                          animation: _pageController,
+                          builder: (context, child) {
+                            double scale = 1.0;
+                            if (_pageController.position.haveDimensions) {
+                              double page = _pageController.page ?? 0.0;
+                              double diff = (page - index).abs();
+                              scale = (1 - (diff * 0.15)).clamp(0.75, 1.0);
+                            } else {
+                              scale = index == 0 ? 1.0 : 0.75;
+                            }
 
-                return PageView.builder(
-                  controller: _pageController,
-                  itemCount: publicCards.length,
-                  itemBuilder: (context, index) {
-                    return AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        double scale = 1.0;
-                        if (_pageController.position.haveDimensions) {
-                          double page = _pageController.page ?? 0.0;
-                          // 中央からの離れ具合
-                          double diff = (page - index).abs();
-                          // 離れるほど小さくする (最大0.75倍まで小さくなる)
-                          scale = (1 - (diff * 0.15)).clamp(0.75, 1.0);
-                        } else {
-                          // ロード直後で1回も描画されていない時
-                          scale = index == 0 ? 1.0 : 0.75;
-                        }
+                            final double offsetY = (1 - scale) * 150;
 
-                        // 選択されていない両端のカードは下に下げる（カーブを描く）
-                        final double offsetY = (1 - scale) * 150;
-
-                        return Transform.translate(
-                          offset: Offset(0, offsetY),
-                          child: Transform.scale(
-                            scale: scale,
-                            child: child,
+                            return Transform.translate(
+                              offset: Offset(0, offsetY),
+                              child: Transform.scale(
+                                scale: scale,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: GestureDetector(
+                              onVerticalDragEnd: (details) {
+                                if (details.primaryVelocity != null && details.primaryVelocity! < -10) {
+                                  context.push('/card_detail', extra: _nearbyCards[index]);
+                                }
+                              },
+                              onTap: () {
+                                context.push('/card_detail', extra: _nearbyCards[index]);
+                              },
+                              child: TcgCardView(model: _nearbyCards[index]),
+                            ),
                           ),
                         );
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        // 上にスワイプした時に詳細画面へ遷移させる
-                        child: GestureDetector(
-                          onVerticalDragEnd: (details) {
-                            if (details.primaryVelocity != null && details.primaryVelocity! < -10) {
-                              context.push('/card_detail', extra: publicCards[index]);
-                            }
-                          },
-                          onTap: () {
-                            context.push('/card_detail', extra: publicCards[index]);
-                          },
-                          child: TcgCardView(model: publicCards[index]),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
           ),
         ],
       ),
