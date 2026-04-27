@@ -59,6 +59,10 @@ ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
 
 -- PostGIS の空間関数（ST_DWithin / ST_Distance / geography 変換）を使うために有効化
 CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- 空間検索を高速化するための GiST インデックスを作成
+CREATE INDEX IF NOT EXISTS public_cards_location_idx ON public_cards USING GIST (location_coords);
+CREATE INDEX IF NOT EXISTS private_cards_location_idx ON private_cards USING GIST (location_coords);
 -- 近くのカードをPostGISの機能で検索し、近い順に返す関数
 CREATE OR REPLACE FUNCTION get_nearby_public_cards(
   target_lat float,
