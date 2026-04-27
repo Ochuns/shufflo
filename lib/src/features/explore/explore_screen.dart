@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -16,7 +17,7 @@ class ExploreScreen extends ConsumerStatefulWidget {
   ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   final PageController _pageController = PageController(viewportFraction: 0.65);
   bool _isLoadingLocation = false;
@@ -25,6 +26,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   List<ExperienceCardModel> _nearbyCards = [];
   bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
+  int _lastFocusedIndex = 0; // 最後にフォーカスされたインデックスを追跡
+  final Set<String> _viewedCardIds = {}; // 一度でも選択（表示）されたカードのIDを保持
+
+  // 手札に加わったカード（発見済みのカード）のみを抽出
+  List<ExperienceCardModel> get _collectedCards => _nearbyCards.where((c) => _viewedCardIds.contains(c.id)).toList();
 
   @override
   void initState() {
@@ -33,6 +39,53 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _goToCurrentLocation(isInitial: true);
     });
+
+    // PageViewのスクロールを監視してマップを連動させる
+    _pageController.addListener(_onPageScrolled);
+  }
+
+  void _onPageScrolled() {
+    if (!_pageController.hasClients || _nearbyCards.isEmpty) return;
+    
+    final double page = _pageController.page ?? 0.0;
+    final int focusedIndex = page.round();
+    
+    // 選択されているカードが変わったらマップをその位置へ滑らかに移動
+    if (focusedIndex != _lastFocusedIndex) {
+      _lastFocusedIndex = focusedIndex;
+      final collected = _collectedCards;
+      if (focusedIndex >= 0 && focusedIndex < collected.length) {
+        final card = collected[focusedIndex];
+        if (card.latitude != null && card.longitude != null) {
+          _animatedMapMove(LatLng(card.latitude!, card.longitude!), 16.5);
+        }
+      }
+    }
+  }
+
+  // マップを滑らかに（ぬるぬる）移動させるための関数
+  void _animatedMapMove(LatLng destLocation, double destZoom) {
+    final latTween = Tween<double>(begin: _mapController.camera.center.latitude, end: destLocation.latitude);
+    final lngTween = Tween<double>(begin: _mapController.camera.center.longitude, end: destLocation.longitude);
+    final zoomTween = Tween<double>(begin: _mapController.camera.zoom, end: destZoom);
+
+    final controller = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
+    final Animation<double> animation = CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+
+    controller.addListener(() {
+      _mapController.move(
+        LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+        zoomTween.evaluate(animation),
+      );
+    });
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+        controller.dispose();
+      }
+    });
+
+    controller.forward();
   }
 
   Future<void> _goToCurrentLocation({bool isInitial = false}) async {
@@ -80,6 +133,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   @override
   void dispose() {
+    _pageController.removeListener(_onPageScrolled);
     _pageController.dispose();
     super.dispose();
   }
@@ -111,6 +165,73 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     );
   }
 
+  Marker _buildEncounterMarker(ExperienceCardModel card, int index) {
+    return Marker(
+      point: LatLng(card.latitude!, card.longitude!),
+      width: 64,
+      height: 64,
+      child: GestureDetector(
+        onTap: () async {
+          final isViewed = _viewedCardIds.contains(card.id);
+          
+          if (isViewed) {
+            // すでに持っているカードなら、手札の中のそのカードまでスクロール
+            final handIndex = _collectedCards.indexWhere((c) => c.id == card.id);
+            if (handIndex != -1 && _pageController.hasClients) {
+              _pageController.animateToPage(handIndex,
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic);
+            }
+          } else {
+            // 未発見の「！」なら、詳細画面を開いてから手札に加える
+            await context.push('/card_detail', extra: card);
+            
+            // 詳細画面から戻ってきたら手札に加える（発見済みにする）
+            if (mounted && !_viewedCardIds.contains(card.id)) {
+              setState(() {
+                _viewedCardIds.add(card.id);
+              });
+              
+              // 手札に加わった直後、その新しく加わったカードの位置まで手札をスクロール
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final newIndex = _collectedCards.indexWhere((c) => c.id == card.id);
+                if (newIndex != -1 && _pageController.hasClients) {
+                  _pageController.animateToPage(newIndex,
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.elasticOut); // 手札に飛び込んでくるような演出
+                }
+              });
+            }
+          }
+        },
+        child: AnimatedBuilder(
+          animation: _pageController,
+          builder: (context, child) {
+            bool isOpen = false;
+            final collected = _collectedCards;
+            if (_pageController.hasClients &&
+                _pageController.position.haveDimensions) {
+              double page = _pageController.page ?? 0.0;
+              // 手札の中のこのカードのインデックスを探す
+              final handIndex = collected.indexWhere((c) => c.id == card.id);
+              if (handIndex != -1 && (page - handIndex).abs() < 0.5) {
+                isOpen = true;
+              }
+            } else {
+              // 初期状態
+              if (collected.isNotEmpty && collected[0].id == card.id) isOpen = true;
+            }
+            return _EncounterMarker(
+              card: card,
+              isOpen: isOpen,
+              isViewed: _viewedCardIds.contains(card.id),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,35 +251,68 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   'accessToken': dotenv.env['MAPBOX_TOKEN'] ?? '', // Mapbox API Key
                 },
               ),
-              MarkerLayer(
-                markers: [
-                  // 現在地のマーカー（自分の位置）
-                  if (_currentLocation != null)
-                    Marker(
-                      point: _currentLocation!,
-                      width: 24,
-                      height: 24,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blueAccent,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 1),
-                          ],
+              // 2. マーカーレイヤー（現在地 + 近接カード）
+              // AnimatedBuilder でラップすることで、スクロールに合わせて描画順をリアルタイムに入れ替える
+              AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, _) {
+                  final markers = <Marker>[];
+                  
+                  // 現在地のマーカー（自分の位置）は最背面付近に配置
+                  if (_currentLocation != null) {
+                    markers.add(
+                      Marker(
+                        point: _currentLocation!,
+                        width: 24,
+                        height: 24,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 1),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  // 近接カードのマーカー
-                  ..._nearbyCards.where((c) => c.latitude != null && c.longitude != null).map((card) {
-                    return Marker(
-                      point: LatLng(card.latitude!, card.longitude!),
-                      width: 40,
-                      height: 40,
-                      child: Icon(Icons.location_on, color: card.category.color, size: 40),
                     );
-                  }),
-                ],
+                  }
+
+                  // 現在フォーカスされているカードのインデックスを取得
+                  int focusedIndex = 0;
+                  final collected = _collectedCards;
+                  if (_pageController.hasClients && _pageController.position.haveDimensions) {
+                    focusedIndex = (_pageController.page ?? 0.0).round();
+                  }
+
+                  // 1. フォーカスされていないマーカーを先に描画（層を下にする）
+                  for (int i = 0; i < _nearbyCards.length; i++) {
+                    final card = _nearbyCards[i];
+                    if (card.latitude == null || card.longitude == null) continue;
+                    
+                    // 手札にあるかチェック
+                    bool isFocused = false;
+                    if (collected.isNotEmpty && focusedIndex < collected.length) {
+                      isFocused = (collected[focusedIndex].id == card.id);
+                    }
+                    if (isFocused) continue;
+
+                    markers.add(_buildEncounterMarker(card, i));
+                  }
+
+                  // 2. フォーカスされている（＝現在見ている）マーカーを最後に描画（層を一番上にする）
+                  if (collected.isNotEmpty && focusedIndex < collected.length) {
+                    final focusedCard = collected[focusedIndex];
+                    if (focusedCard.latitude != null && focusedCard.longitude != null) {
+                      // インデックスは _nearbyCards 内のものでもよいが、一貫性のために ID で判定
+                      final originalIndex = _nearbyCards.indexWhere((c) => c.id == focusedCard.id);
+                      markers.add(_buildEncounterMarker(focusedCard, originalIndex));
+                    }
+                  }
+
+                  return MarkerLayer(markers: markers);
+                },
               ),
             ],
           ),
@@ -235,13 +389,21 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     )
                   : _nearbyCards.isEmpty
                       ? _buildBanner(
-                          message: 'この周辺にはまだカードがありません',
+                          message: 'この周辺にはまだカードがありません\nあなたが最初の投稿者になりませんか？',
                           backgroundColor: Colors.black.withOpacity(0.6),
+                          icon: Icons.edit_location_alt,
                         )
+                      : _collectedCards.isEmpty
+                          ? _buildBanner(
+                              message: 'マップ上のキラキラを手札に加えよう！',
+                              backgroundColor: Colors.amber.withValues(alpha: 0.8),
+                              icon: Icons.auto_awesome,
+                            )
                   : PageView.builder(
                       controller: _pageController,
-                      itemCount: _nearbyCards.length,
+                      itemCount: _collectedCards.length,
                       itemBuilder: (context, index) {
+                        final card = _collectedCards[index];
                         return AnimatedBuilder(
                           animation: _pageController,
                           builder: (context, child) {
@@ -249,12 +411,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             if (_pageController.position.haveDimensions) {
                               double page = _pageController.page ?? 0.0;
                               double diff = (page - index).abs();
-                              scale = (1 - (diff * 0.15)).clamp(0.75, 1.0);
+                              // イージングを適用して、中央に来る時の変化を「ぬるぬる」させる
+                              double ease = Curves.easeOutCubic.transform((1 - diff.clamp(0, 1)).toDouble());
+                              scale = 0.75 + (ease * 0.25);
                             } else {
                               scale = index == 0 ? 1.0 : 0.75;
                             }
 
-                            final double offsetY = (1 - scale) * 150;
+                            final double offsetY = (1 - scale) * 120; // 少しだけ位置調整をマイルドに
 
                             return Transform.translate(
                               offset: Offset(0, offsetY),
@@ -269,13 +433,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             child: GestureDetector(
                               onVerticalDragEnd: (details) {
                                 if (details.primaryVelocity != null && details.primaryVelocity! < -10) {
-                                  context.push('/card_detail', extra: _nearbyCards[index]);
+                                  context.push('/card_detail', extra: card);
                                 }
                               },
                               onTap: () {
-                                context.push('/card_detail', extra: _nearbyCards[index]);
+                                context.push('/card_detail', extra: card);
                               },
-                              child: TcgCardView(model: _nearbyCards[index]),
+                              child: TcgCardView(model: card),
                             ),
                           ),
                         );
@@ -283,6 +447,172 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// エンカウントマーカー
+class _EncounterMarker extends StatefulWidget {
+  final ExperienceCardModel card;
+  final bool isOpen;
+  final bool isViewed; // 一度でも選択（表示）されたかどうか
+  const _EncounterMarker({
+    required this.card,
+    this.isOpen = false,
+    this.isViewed = false,
+  });
+
+  @override
+  State<_EncounterMarker> createState() => _EncounterMarkerState();
+}
+
+class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _shakeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2), 
+    )..repeat();
+
+    // 震えるようなアニメーションを有機的なカーブに変更
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0, end: 0.05).chain(CurveTween(curve: Curves.easeInOutSine)),
+        weight: 15,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.05, end: -0.05).chain(CurveTween(curve: Curves.easeInOutSine)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -0.05, end: 0).chain(CurveTween(curve: Curves.easeInOutSine)),
+        weight: 15,
+      ),
+      TweenSequenceItem(tween: ConstantTween<double>(0), weight: 40),
+    ]).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // サイン波を使って滑らかに上下浮遊させる
+        final hoverOffset = sin(_controller.value * 2 * pi) * 2.5;
+        return Transform.translate(
+          offset: Offset(0, widget.isOpen ? -14 : hoverOffset),
+          child: Transform.rotate(
+            angle: widget.isOpen ? 0 : _shakeAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: AnimatedScale(
+        scale: widget.isOpen ? 1.5 : 1.0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutBack, // ポンッと出るような心地よいイージング
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            // キラキラ演出（未発見時のみ星を表示）
+            if (!widget.isViewed) ...[
+              _buildSparkle(top: -10, left: -10, size: 14, delay: 0),
+              _buildSparkle(top: -12, right: -5, size: 10, delay: 0.5),
+              _buildSparkle(bottom: 5, right: -12, size: 12, delay: 0.2),
+            ],
+            // 吹き出しのしっぽ部分
+            Positioned(
+              bottom: 0,
+              child: Icon(
+                Icons.arrow_drop_down_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            // 白い丸い吹き出し
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                  // 未発見（！）の時だけ、黄色のキラキラ光るオーラをつける
+                  if (!widget.isViewed)
+                    BoxShadow(
+                      color: Colors.amber.withValues(
+                        alpha: 0.4 + (sin(_controller.value * 2 * pi) * 0.2 + 0.2), 
+                      ),
+                      blurRadius: 10 + (sin(_controller.value * 2 * pi) * 6 + 6),
+                      spreadRadius: 1 + (sin(_controller.value * 2 * pi) * 3 + 3),
+                    ),
+                ],
+              ),
+              child: Center(
+                child: widget.isViewed
+                    ? Icon(
+                        widget.card.category.icon,
+                        color: widget.card.category.color,
+                        size: 24,
+                      )
+                    : const Text(
+                        '!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // キラキラの星を作るヘルパー
+  Widget _buildSparkle({double? top, double? left, double? right, double? bottom, required double size, required double delay}) {
+    return Positioned(
+      top: top,
+      left: left,
+      right: right,
+      bottom: bottom,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          // 個別にタイミングをずらしてキラキラさせる
+          final val = sin((_controller.value + delay) * 2 * pi);
+          final opacity = (val * 0.5 + 0.5).clamp(0.0, 1.0);
+          final scale = 0.5 + (val * 0.5 + 0.5) * 0.5;
+          return Opacity(
+            opacity: opacity,
+            child: Transform.scale(
+              scale: scale,
+              child: child,
+            ),
+          );
+        },
+        child: Icon(Icons.star_rounded, color: Colors.amber, size: size),
       ),
     );
   }
