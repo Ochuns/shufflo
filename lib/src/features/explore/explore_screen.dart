@@ -84,6 +84,33 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     super.dispose();
   }
 
+  Widget _buildBanner({required String message, required Color backgroundColor, IconData? icon}) {
+    return Container(
+      alignment: Alignment.topCenter,
+      padding: const EdgeInsets.only(top: 80),
+      child: Semantics(
+        label: message,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+              ],
+              Text(message, style: const TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -201,37 +228,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             child: _isLoadingNearbyCards
               ? const Center(child: CircularProgressIndicator())
               : _locationError
-                  ? Container(
-                      alignment: Alignment.topCenter,
-                      padding: const EdgeInsets.only(top: 80),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.75),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.location_off, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('位置情報が取得できませんでした。設定をご確認ください。', style: TextStyle(color: Colors.white)),
-                          ],
-                        ),
-                      ),
+                  ? _buildBanner(
+                      message: '位置情報が取得できませんでした。設定をご確認ください。',
+                      backgroundColor: Colors.red.withOpacity(0.75),
+                      icon: Icons.location_off,
                     )
                   : _nearbyCards.isEmpty
-                      ? Container(
-                          alignment: Alignment.topCenter,
-                          padding: const EdgeInsets.only(top: 80), // 画面に絶妙に見える位置へ下げる
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: const Text('この周辺にはまだカードがありません', style: TextStyle(color: Colors.white)),
-                          ),
+                      ? _buildBanner(
+                          message: 'この周辺にはまだカードがありません',
+                          backgroundColor: Colors.black.withOpacity(0.6),
                         )
                   : PageView.builder(
                       controller: _pageController,
