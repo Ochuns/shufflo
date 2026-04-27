@@ -71,6 +71,10 @@ CREATE OR REPLACE FUNCTION get_nearby_public_cards(
   limit_num int
 ) RETURNS SETOF public_cards AS $$
 BEGIN
+  -- 入力値の上限を設定してDoS/重クエリを防止
+  max_dist_meters := LEAST(COALESCE(max_dist_meters, 5000), 50000);  -- デフォルト5km、最大50km
+  limit_num       := LEAST(GREATEST(COALESCE(limit_num, 10), 1), 50); -- デフォルト10件、1〜50件
+
   RETURN QUERY
   SELECT *
   FROM public_cards
@@ -89,6 +93,8 @@ BEGIN
   LIMIT limit_num;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_catalog;
+-- 注: 関数内でパラメータを上限値にclampしてDoS/重クエリを防止しています
+--   max_dist_meters: 最大50km、limit_num: 1〜50件
 
 -- ==========================================
 -- Shufflo Database Update: Logical Delete Permissions
