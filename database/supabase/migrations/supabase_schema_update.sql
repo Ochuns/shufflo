@@ -54,6 +54,49 @@ ALTER TABLE public_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
 ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
 
 -- ==========================================
+-- Shufflo Database Update: Spatial Query RPC
+-- ==========================================
+
+-- PostGIS の空間関数（ST_DWithin / ST_Distance / geography 変換）を使うために有効化
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- 空間検索を高速化するための GiST インデックスを作成
+CREATE INDEX IF NOT EXISTS public_cards_location_idx ON public_cards USING GIST (location_coords);
+CREATE INDEX IF NOT EXISTS private_cards_location_idx ON private_cards USING GIST (location_coords);
+-- 近くのカードをPostGISの機能で検索し、近い順に返す関数
+CREATE OR REPLACE FUNCTION get_nearby_public_cards(
+  target_lat float,
+  target_lon float,
+  max_dist_meters float,
+  limit_num int
+) RETURNS SETOF public_cards AS $$
+BEGIN
+  -- 入力値の上限を設定してDoS/重クエリを防止
+  max_dist_meters := LEAST(COALESCE(max_dist_meters, 5000), 50000);  -- デフォルト5km、最大50km
+  limit_num       := LEAST(GREATEST(COALESCE(limit_num, 10), 1), 50); -- デフォルト10件、1〜50件
+
+  RETURN QUERY
+  SELECT *
+  FROM public_cards
+  WHERE deleted_at IS NULL
+    -- ST_DWithin で指定範囲内かどうかをインデックスを使って高速判定
+    AND ST_DWithin(
+          location_coords::geography,
+          ST_Point(target_lon, target_lat)::geography,
+          max_dist_meters
+        )
+  -- ST_Distance で距離順にソート
+  ORDER BY ST_Distance(
+             location_coords::geography,
+             ST_Point(target_lon, target_lat)::geography
+           ) ASC
+  LIMIT limit_num;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_catalog;
+-- 注: 関数内でパラメータを上限値にclampしてDoS/重クエリを防止しています
+--   max_dist_meters: 最大50km、limit_num: 1〜50件
+
+-- ==========================================
 -- Shufflo Database Update: Logical Delete Permissions
 -- ==========================================
 
