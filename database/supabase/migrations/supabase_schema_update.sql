@@ -57,6 +57,8 @@ ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS local_image_path TEXT;
 -- Shufflo Database Update: Spatial Query RPC
 -- ==========================================
 
+-- PostGIS の空間関数（ST_DWithin / ST_Distance / geography 変換）を使うために有効化
+CREATE EXTENSION IF NOT EXISTS postgis;
 -- 近くのカードをPostGISの機能で検索し、近い順に返す関数
 CREATE OR REPLACE FUNCTION get_nearby_public_cards(
   target_lat float,
