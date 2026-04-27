@@ -27,10 +27,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
   List<ExperienceCardModel> _nearbyCards = [];
   bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
   int _lastFocusedIndex = 0; // 最後にフォーカスされたインデックスを追跡
-  final Set<String> _viewedCardIds = {}; // 一度でも選択（表示）されたカードのIDを保持
-
-  // 手札に加わったカード（発見済みのカード）のみを抽出
-  List<ExperienceCardModel> get _collectedCards => _nearbyCards.where((c) => _viewedCardIds.contains(c.id)).toList();
+  final List<ExperienceCardModel> _handCards = []; // 手札に加わったカード（発見済みのカード）を順番に保持
 
   @override
   void initState() {
@@ -53,9 +50,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     // 選択されているカードが変わったらマップをその位置へ滑らかに移動
     if (focusedIndex != _lastFocusedIndex) {
       _lastFocusedIndex = focusedIndex;
-      final collected = _collectedCards;
-      if (focusedIndex >= 0 && focusedIndex < collected.length) {
-        final card = collected[focusedIndex];
+      if (focusedIndex >= 0 && focusedIndex < _handCards.length) {
+        final card = _handCards[focusedIndex];
         if (card.latitude != null && card.longitude != null) {
           _animatedMapMove(LatLng(card.latitude!, card.longitude!), 16.5);
         }
@@ -172,11 +168,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
       height: 64,
       child: GestureDetector(
         onTap: () async {
-          final isViewed = _viewedCardIds.contains(card.id);
+          final isViewed = _handCards.any((c) => c.id == card.id);
           
           if (isViewed) {
             // すでに持っているカードなら、手札の中のそのカードまでスクロール
-            final handIndex = _collectedCards.indexWhere((c) => c.id == card.id);
+            final handIndex = _handCards.indexWhere((c) => c.id == card.id);
             if (handIndex != -1 && _pageController.hasClients) {
               _pageController.animateToPage(handIndex,
                   duration: const Duration(milliseconds: 600),
@@ -186,16 +182,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
             // 未発見の「！」なら、詳細画面を開いてから手札に加える
             await context.push('/card_detail', extra: card);
             
-            // 詳細画面から戻ってきたら手札に加える（発見済みにする）
-            if (mounted && !_viewedCardIds.contains(card.id)) {
+            // 詳細画面から戻ってきたら手札の最後（右側）に加える
+            if (mounted && !_handCards.any((c) => c.id == card.id)) {
               setState(() {
-                _viewedCardIds.add(card.id);
+                _handCards.add(card);
               });
               
-              // 手札に加わった直後、その新しく加わったカードの位置まで手札をスクロール
+              // 手札に加わった直後、その最後尾（一番右）まで手札をスクロール
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                final newIndex = _collectedCards.indexWhere((c) => c.id == card.id);
-                if (newIndex != -1 && _pageController.hasClients) {
+                final newIndex = _handCards.length - 1;
+                if (newIndex >= 0 && _pageController.hasClients) {
                   _pageController.animateToPage(newIndex,
                       duration: const Duration(milliseconds: 800),
                       curve: Curves.elasticOut); // 手札に飛び込んでくるような演出
@@ -208,7 +204,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
           animation: _pageController,
           builder: (context, child) {
             bool isOpen = false;
-            final collected = _collectedCards;
+            final collected = _handCards;
             if (_pageController.hasClients &&
                 _pageController.position.haveDimensions) {
               double page = _pageController.page ?? 0.0;
@@ -224,7 +220,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
             return _EncounterMarker(
               card: card,
               isOpen: isOpen,
-              isViewed: _viewedCardIds.contains(card.id),
+              isViewed: _handCards.any((c) => c.id == card.id),
             );
           },
         ),
@@ -281,7 +277,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
 
                   // 現在フォーカスされているカードのインデックスを取得
                   int focusedIndex = 0;
-                  final collected = _collectedCards;
+                  final collected = _handCards;
                   if (_pageController.hasClients && _pageController.position.haveDimensions) {
                     focusedIndex = (_pageController.page ?? 0.0).round();
                   }
@@ -393,7 +389,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                           backgroundColor: Colors.black.withOpacity(0.6),
                           icon: Icons.edit_location_alt,
                         )
-                      : _collectedCards.isEmpty
+                      : _handCards.isEmpty
                           ? _buildBanner(
                               message: 'マップ上のキラキラを手札に加えよう！',
                               backgroundColor: Colors.amber.withValues(alpha: 0.8),
@@ -401,9 +397,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                             )
                   : PageView.builder(
                       controller: _pageController,
-                      itemCount: _collectedCards.length,
+                      itemCount: _handCards.length,
                       itemBuilder: (context, index) {
-                        final card = _collectedCards[index];
+                        final card = _handCards[index];
                         return AnimatedBuilder(
                           animation: _pageController,
                           builder: (context, child) {
