@@ -3,8 +3,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/cards_provider.dart';
-import '../../common_widgets/experience_card.dart'; // 互換性のため残す
 import '../../common_widgets/tcg_card_view.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/supabase_repository.dart';
@@ -23,7 +21,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.65);
   bool _isLoadingLocation = false;
   LatLng? _currentLocation;
-  
+  bool _locationError = false; // 位置情報の取得失敗フラグ
+
   List<ExperienceCardModel> _nearbyCards = [];
   bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
 
@@ -49,10 +48,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
     if (loc != null) {
       _currentLocation = loc;
+      _locationError = false;
       _mapController.move(loc, 16.5); // 地図の縮尺
       _fetchNearbyCards(loc);
     } else {
-      setState(() => _isLoadingNearbyCards = false); // エラー時もローディング解除
+      setState(() {
+        _isLoadingNearbyCards = false; // エラー時もローディング解除
+        _locationError = true;
+      });
       if (!isInitial) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('位置情報が許可されていません。設定をご確認ください。')),
@@ -62,7 +65,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   Future<void> _fetchNearbyCards(LatLng loc) async {
-    setState(() => _isLoadingNearbyCards = true);
+    setState(() {
+      _isLoadingNearbyCards = true;
+      _locationError = false;
+    });
     final repo = ref.read(supabaseRepositoryProvider);
     final cards = await repo.fetchNearbyPublicCards(loc.latitude, loc.longitude);
     if (!mounted) return;
@@ -194,19 +200,39 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             height: 480, // TCGカード枠を描画するのに十分な高さ
             child: _isLoadingNearbyCards
               ? const Center(child: CircularProgressIndicator())
-              : _nearbyCards.isEmpty
+              : _locationError
                   ? Container(
                       alignment: Alignment.topCenter,
-                      padding: const EdgeInsets.only(top: 80), // 画面に絶妙に見える位置へ下げる
+                      padding: const EdgeInsets.only(top: 80),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
+                          color: Colors.red.withOpacity(0.75),
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Text('この周辺にはまだカードがありません', style: TextStyle(color: Colors.white)),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.location_off, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text('位置情報が取得できませんでした。設定をご確認ください。', style: TextStyle(color: Colors.white)),
+                          ],
+                        ),
                       ),
                     )
+                  : _nearbyCards.isEmpty
+                      ? Container(
+                          alignment: Alignment.topCenter,
+                          padding: const EdgeInsets.only(top: 80), // 画面に絶妙に見える位置へ下げる
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: const Text('この周辺にはまだカードがありません', style: TextStyle(color: Colors.white)),
+                          ),
+                        )
                   : PageView.builder(
                       controller: _pageController,
                       itemCount: _nearbyCards.length,
