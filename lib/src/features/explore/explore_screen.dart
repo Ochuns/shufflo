@@ -67,18 +67,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     final zoomTween = Tween<double>(begin: _mapController.camera.zoom, end: destZoom);
 
     // 前回のアニメーションが残っていれば停止・破棄してから新しいものを開始
+    _moveAnimationController?.stop();
     _moveAnimationController?.dispose();
     _moveAnimationController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
     final Animation<double> animation = CurvedAnimation(parent: _moveAnimationController!, curve: Curves.fastOutSlowIn);
 
-    _moveAnimationController!.addListener(() {
+    void onTick() {
       if (!mounted) return;
       _mapController.move(
         LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
         zoomTween.evaluate(animation),
       );
-    });
+    }
 
+    _moveAnimationController!.addListener(onTick);
     _moveAnimationController!.forward();
   }
 
