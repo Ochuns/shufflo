@@ -161,7 +161,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     );
   }
 
-  Marker _buildEncounterMarker(ExperienceCardModel card, int index) {
+  Marker _buildEncounterMarker(ExperienceCardModel card) {
     return Marker(
       point: LatLng(card.latitude!, card.longitude!),
       width: 64,
@@ -294,16 +294,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                     }
                     if (isFocused) continue;
 
-                    markers.add(_buildEncounterMarker(card, i));
+                    markers.add(_buildEncounterMarker(card));
                   }
 
                   // 2. フォーカスされている（＝現在見ている）マーカーを最後に描画（層を一番上にする）
                   if (collected.isNotEmpty && focusedIndex < collected.length) {
                     final focusedCard = collected[focusedIndex];
                     if (focusedCard.latitude != null && focusedCard.longitude != null) {
-                      // インデックスは _nearbyCards 内のものでもよいが、一貫性のために ID で判定
-                      final originalIndex = _nearbyCards.indexWhere((c) => c.id == focusedCard.id);
-                      markers.add(_buildEncounterMarker(focusedCard, originalIndex));
+                      // フォーカスされているマーカーを最前面に描画
+                      markers.add(_buildEncounterMarker(focusedCard));
                     }
                   }
 
@@ -472,8 +471,12 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2), 
-    )..repeat();
+      duration: const Duration(seconds: 2),
+    );
+
+    if (!widget.isViewed) {
+      _controller.repeat();
+    }
 
     // 震えるようなアニメーションを有機的なカーブに変更
     _shakeAnimation = TweenSequence<double>([
@@ -491,6 +494,14 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
       ),
       TweenSequenceItem(tween: ConstantTween<double>(0), weight: 40),
     ]).animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(_EncounterMarker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isViewed && widget.isViewed) {
+      _controller.stop();
+    }
   }
 
   @override
