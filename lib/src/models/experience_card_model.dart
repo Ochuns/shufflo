@@ -45,6 +45,21 @@ extension ExperienceCategoryExtension on ExperienceCategory {
         return const Color(0xFF64748B); // Slate
     }
   }
+
+  IconData get icon {
+    switch (this) {
+      case ExperienceCategory.restaurant:
+        return Icons.restaurant_menu;
+      case ExperienceCategory.cafe:
+        return Icons.local_cafe;
+      case ExperienceCategory.sightseeing:
+        return Icons.landscape;
+      case ExperienceCategory.amusement:
+        return Icons.attractions;
+      case ExperienceCategory.other:
+        return Icons.star;
+    }
+  }
 }
 
 class ExperienceCardModel {
