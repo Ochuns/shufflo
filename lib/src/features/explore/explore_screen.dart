@@ -163,6 +163,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
   }
 
   Marker _buildEncounterMarker(ExperienceCardModel card) {
+    bool isOpen = false;
+    final collected = _handCards;
+    if (_pageController.hasClients && _pageController.position.haveDimensions) {
+      double page = _pageController.page ?? 0.0;
+      // 手札の中のこのカードのインデックスを探す
+      final handIndex = collected.indexWhere((c) => c.id == card.id);
+      if (handIndex != -1 && (page - handIndex).abs() < 0.5) {
+        isOpen = true;
+      }
+    } else {
+      // 初期状態
+      if (collected.isNotEmpty && collected[0].id == card.id) isOpen = true;
+    }
+
     return Marker(
       point: LatLng(card.latitude!, card.longitude!),
       width: 64,
@@ -201,29 +215,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
             }
           }
         },
-        child: AnimatedBuilder(
-          animation: _pageController,
-          builder: (context, child) {
-            bool isOpen = false;
-            final collected = _handCards;
-            if (_pageController.hasClients &&
-                _pageController.position.haveDimensions) {
-              double page = _pageController.page ?? 0.0;
-              // 手札の中のこのカードのインデックスを探す
-              final handIndex = collected.indexWhere((c) => c.id == card.id);
-              if (handIndex != -1 && (page - handIndex).abs() < 0.5) {
-                isOpen = true;
-              }
-            } else {
-              // 初期状態
-              if (collected.isNotEmpty && collected[0].id == card.id) isOpen = true;
-            }
-            return _EncounterMarker(
-              card: card,
-              isOpen: isOpen,
-              isViewed: _handCards.any((c) => c.id == card.id),
-            );
-          },
+        child: _EncounterMarker(
+          key: ValueKey(card.id), // 再ビルド時に状態が破棄されないようKeyを固定
+          card: card,
+          isOpen: isOpen,
+          isViewed: _handCards.any((c) => c.id == card.id),
         ),
       ),
     );
@@ -414,7 +410,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                               scale = index == 0 ? 1.0 : 0.75;
                             }
 
-                            final double offsetY = (1 - scale) * 120; // 少しだけ位置調整をマイルドに
+                            final double offsetY = (1 - scale) * 120;
 
                             return Transform.translate(
                               offset: Offset(0, offsetY),
@@ -454,6 +450,7 @@ class _EncounterMarker extends StatefulWidget {
   final bool isOpen;
   final bool isViewed; // 一度でも選択（表示）されたかどうか
   const _EncounterMarker({
+    super.key,
     required this.card,
     this.isOpen = false,
     this.isViewed = false,
@@ -479,7 +476,6 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
       _controller.repeat();
     }
 
-    // 震えるようなアニメーションを有機的なカーブに変更
     _shakeAnimation = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(begin: 0, end: 0.05).chain(CurveTween(curve: Curves.easeInOutSine)),
@@ -517,111 +513,122 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        // サイン波を使って滑らかに上下浮遊させる
-        final hoverOffset = sin(_controller.value * 2 * pi) * 2.5;
+        final floatValue = sin(_controller.value * 2 * pi);
+        final hoverOffset = floatValue * 2.5;
+        
+        final auraOpacity = 0.2 + ((floatValue + 1) / 2) * 0.6;
+        final auraScale = 1.0 + ((floatValue + 1) / 2) * 0.3;
+
         return Transform.translate(
           offset: Offset(0, widget.isOpen ? -14 : hoverOffset),
           child: Transform.rotate(
             angle: widget.isOpen ? 0 : _shakeAnimation.value,
-            child: child,
+            child: AnimatedScale(
+              scale: widget.isOpen ? 1.5 : 1.0,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutBack, // ポンッと出るような心地よいイージング
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  if (!widget.isViewed)
+                    Transform.scale(
+                      scale: auraScale,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.amber.withValues(alpha: auraOpacity),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // キラキラ演出
+                  if (!widget.isViewed) ...[
+                    _buildSparkle(top: -10, left: -10, size: 14, delay: 0, val: _controller.value),
+                    _buildSparkle(top: -12, right: -5, size: 10, delay: 0.5, val: _controller.value),
+                    _buildSparkle(bottom: 5, right: -12, size: 12, delay: 0.2, val: _controller.value),
+                  ],
+                  child!,
+                ],
+              ),
+            ),
           ),
         );
       },
-      child: AnimatedScale(
-        scale: widget.isOpen ? 1.5 : 1.0,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutBack, // ポンッと出るような心地よいイージング
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            // キラキラ演出（未発見時のみ星を表示）
-            if (!widget.isViewed) ...[
-              _buildSparkle(top: -10, left: -10, size: 14, delay: 0),
-              _buildSparkle(top: -12, right: -5, size: 10, delay: 0.5),
-              _buildSparkle(bottom: 5, right: -12, size: 12, delay: 0.2),
-            ],
-            // 吹き出しのしっぽ部分
-            Positioned(
-              bottom: 0,
-              child: Icon(
-                Icons.arrow_drop_down_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
+      // 重い静的ウィジェットをあらかじめ構築して、AnimatedBuilderの再描画コストをゼロにする
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          const Positioned(
+            bottom: 0,
+            child: Icon(
+              Icons.arrow_drop_down_rounded,
+              color: Colors.white,
+              size: 32,
             ),
-            // 白い丸い吹き出し
-            Container(
-              width: 40,
-              height: 40,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                  // 未発見（！）の時だけ、黄色のキラキラ光るオーラをつける
-                  if (!widget.isViewed)
-                    BoxShadow(
-                      color: Colors.amber.withValues(
-                        alpha: 0.4 + (sin(_controller.value * 2 * pi) * 0.2 + 0.2), 
+          ),
+          Container(
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: widget.isViewed
+                  ? Icon(
+                      widget.card.category.icon,
+                      color: widget.card.category.color,
+                      size: 24,
+                    )
+                  : const Text(
+                      '!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
                       ),
-                      blurRadius: 10 + (sin(_controller.value * 2 * pi) * 6 + 6),
-                      spreadRadius: 1 + (sin(_controller.value * 2 * pi) * 3 + 3),
                     ),
-                ],
-              ),
-              child: Center(
-                child: widget.isViewed
-                    ? Icon(
-                        widget.card.category.icon,
-                        color: widget.card.category.color,
-                        size: 24,
-                      )
-                    : const Text(
-                        '!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // キラキラの星を作るヘルパー
-  Widget _buildSparkle({double? top, double? left, double? right, double? bottom, required double size, required double delay}) {
+  // キラキラの星を作るヘルパー（個別のAnimatedBuilderを排除）
+  Widget _buildSparkle({double? top, double? left, double? right, double? bottom, required double size, required double delay, required double val}) {
+    final sinVal = sin((val + delay) * 2 * pi);
+    final opacity = (sinVal * 0.5 + 0.5).clamp(0.0, 1.0);
+    final scale = 0.5 + (sinVal * 0.5 + 0.5) * 0.5;
+    
     return Positioned(
       top: top,
       left: left,
       right: right,
       bottom: bottom,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          // 個別にタイミングをずらしてキラキラさせる
-          final val = sin((_controller.value + delay) * 2 * pi);
-          final opacity = (val * 0.5 + 0.5).clamp(0.0, 1.0);
-          final scale = 0.5 + (val * 0.5 + 0.5) * 0.5;
-          return Opacity(
-            opacity: opacity,
-            child: Transform.scale(
-              scale: scale,
-              child: child,
-            ),
-          );
-        },
-        child: Icon(Icons.star_rounded, color: Colors.amber, size: size),
+      child: Transform.scale(
+        scale: scale,
+        child: Icon(Icons.star_rounded, color: Colors.amber.withValues(alpha: opacity), size: size),
       ),
     );
   }
