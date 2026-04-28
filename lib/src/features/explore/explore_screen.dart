@@ -501,6 +501,7 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isViewed && widget.isViewed) {
       _controller.stop();
+      _controller.reset();
     }
   }
 
