@@ -28,6 +28,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
   bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
   int _lastFocusedIndex = 0; // 最後にフォーカスされたインデックスを追跡
   final List<ExperienceCardModel> _handCards = []; // 手札に加わったカード（発見済みのカード）を順番に保持
+  AnimationController? _moveAnimationController; // マップ移動アニメーション用コントローラー
 
   @override
   void initState() {
@@ -65,23 +66,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     final lngTween = Tween<double>(begin: _mapController.camera.center.longitude, end: destLocation.longitude);
     final zoomTween = Tween<double>(begin: _mapController.camera.zoom, end: destZoom);
 
-    final controller = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
-    final Animation<double> animation = CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+    // 前回のアニメーションが残っていれば停止・破棄してから新しいものを開始
+    _moveAnimationController?.dispose();
+    _moveAnimationController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
+    final Animation<double> animation = CurvedAnimation(parent: _moveAnimationController!, curve: Curves.fastOutSlowIn);
 
-    controller.addListener(() {
+    _moveAnimationController!.addListener(() {
+      if (!mounted) return;
       _mapController.move(
         LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
         zoomTween.evaluate(animation),
       );
     });
 
-    animation.addStatusListener((status) {
-      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
-        controller.dispose();
-      }
-    });
-
-    controller.forward();
+    _moveAnimationController!.forward();
   }
 
   Future<void> _goToCurrentLocation({bool isInitial = false}) async {
@@ -129,6 +127,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
 
   @override
   void dispose() {
+    _moveAnimationController?.dispose();
     _pageController.removeListener(_onPageScrolled);
     _pageController.dispose();
     super.dispose();
