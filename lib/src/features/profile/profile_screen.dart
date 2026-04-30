@@ -20,7 +20,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final cardsAsync = ref.watch(cardsProvider);
 
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
@@ -119,7 +119,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     indicatorWeight: 2,
                     labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
                     tabs: const [
-                      Tab(icon: Icon(LucideIcons.user, size: 20), text: 'Info'),
                       Tab(icon: Icon(LucideIcons.heart, size: 20), text: 'Favorites'),
                       Tab(icon: Icon(LucideIcons.users, size: 20), text: 'Friends'),
                     ],
@@ -129,7 +128,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _buildProfileInfoTab(),
                       _buildFavoritesTab(),
                       _buildFriendSearchTab(),
                     ],
@@ -158,17 +156,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           label,
           style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500),
         ),
-      ],
-    );
-  }
-
-  Widget _buildProfileInfoTab() {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        _buildInfoCard('Bio', 'I love capturing the sounds and visuals of the city. Every card is a new story.'),
-        const SizedBox(height: 16),
-        _buildInfoCard('Location', 'Tokyo, Japan'),
       ],
     );
   }
@@ -224,25 +211,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             'Find Your Friends',
             style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(String title, String content) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-          const SizedBox(height: 8),
-          Text(content, style: GoogleFonts.inter(fontSize: 15, color: Colors.white)),
         ],
       ),
     );
