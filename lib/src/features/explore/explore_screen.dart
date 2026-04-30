@@ -185,14 +185,31 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     );
   }
 
+  List<ExperienceCardModel>? _handCardIndexSource;
+  int _handCardIndexSourceLength = -1;
+  Map<Object?, int> _handCardIndexById = const <Object?, int>{};
+
+  Map<Object?, int> _getHandCardIndexById() {
+    final collected = _handCards;
+    if (!identical(_handCardIndexSource, collected) ||
+        _handCardIndexSourceLength != collected.length) {
+      _handCardIndexById = <Object?, int>{
+        for (int i = 0; i < collected.length; i++) collected[i].id: i,
+      };
+      _handCardIndexSource = collected;
+      _handCardIndexSourceLength = collected.length;
+    }
+    return _handCardIndexById;
+  }
+
   Marker _buildEncounterMarker(ExperienceCardModel card) {
     bool isOpen = false;
     final collected = _handCards;
+    final handCardIndexById = _getHandCardIndexById();
     if (_pageController.hasClients && _pageController.position.haveDimensions) {
       double page = _pageController.page ?? 0.0;
-      // 手札の中のこのカードのインデックスを探す
-      final handIndex = collected.indexWhere((c) => c.id == card.id);
-      if (handIndex != -1 && (page - handIndex).abs() < 0.5) {
+      final handIndex = handCardIndexById[card.id];
+      if (handIndex != null && (page - handIndex).abs() < 0.5) {
         isOpen = true;
       }
     } else {
