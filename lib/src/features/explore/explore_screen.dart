@@ -25,10 +25,24 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
   bool _locationError = false; // 位置情報の取得失敗フラグ
 
   List<ExperienceCardModel> _nearbyCards = [];
+  List<ExperienceCardModel> _displayedNearbyCards = [];
   bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
   int _lastFocusedIndex = 0; // 最後にフォーカスされたインデックスを追跡
   final List<ExperienceCardModel> _handCards = []; // 手札に加わったカード（発見済みのカード）を順番に保持
   AnimationController? _moveAnimationController; // マップ移動アニメーション用コントローラー
+
+  ExperienceCategory? _selectedCategory;
+  ExperienceCategory? _draftSelectedCategory;
+  int _searchCount = 0;
+
+  void _applyFilterAndShuffle() {
+    List<ExperienceCardModel> candidates = _nearbyCards.toList();
+    if (_selectedCategory != null) {
+      candidates = candidates.where((c) => c.category == _selectedCategory).toList();
+    }
+    candidates.shuffle();
+    _displayedNearbyCards = candidates.take(10).toList(); // 一度に表示する上限を設けて再抽選の楽しさを出す
+  }
 
   @override
   void initState() {
@@ -123,6 +137,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     if (!mounted) return;
     setState(() {
       _nearbyCards = cards;
+      _applyFilterAndShuffle();
       _isLoadingNearbyCards = false;
     });
   }
@@ -216,7 +231,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
           }
         },
         child: _EncounterMarker(
-          key: ValueKey(card.id), // 再ビルド時に状態が破棄されないようKeyを固定
+          key: ValueKey('${card.id}_$_searchCount'), // 検索のたびにKeyを変えて再描画（ポップアップ）させる
           card: card,
           isOpen: isOpen,
           isViewed: _handCards.any((c) => c.id == card.id),
@@ -280,13 +295,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                   }
 
                   // 1. フォーカスされていないマーカーを先に描画（層を下にする）
-                  for (int i = 0; i < _nearbyCards.length; i++) {
-                    final card = _nearbyCards[i];
+                  for (int i = 0; i < _displayedNearbyCards.length; i++) {
+                    final card = _displayedNearbyCards[i];
                     if (card.latitude == null || card.longitude == null) continue;
                     
                     // 手札にあるかチェック
                     bool isFocused = false;
-                    if (collected.isNotEmpty && focusedIndex < collected.length) {
+                    if (collected.isNotEmpty && focusedIndex >= 0 && focusedIndex < collected.length) {
                       isFocused = (collected[focusedIndex].id == card.id);
                     }
                     if (isFocused) continue;
@@ -295,7 +310,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                   }
 
                   // 2. フォーカスされている（＝現在見ている）マーカーを最後に描画（層を一番上にする）
-                  if (collected.isNotEmpty && focusedIndex < collected.length) {
+                  if (collected.isNotEmpty && focusedIndex >= 0 && focusedIndex < collected.length) {
                     final focusedCard = collected[focusedIndex];
                     if (focusedCard.latitude != null && focusedCard.longitude != null) {
                       // フォーカスされているマーカーを最前面に描画
@@ -319,21 +334,39 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
               clipBehavior: Clip.none,
               child: Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Chip(
-                      label: Icon(Icons.search, size: 20),
-                      backgroundColor: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      label: Icon(Icons.search, size: 20, color: _draftSelectedCategory != _selectedCategory ? Colors.white : const Color(0xFF2D3436)),
+                      backgroundColor: _draftSelectedCategory != _selectedCategory ? Colors.blueAccent : Colors.white,
                       side: BorderSide.none,
-                      elevation: 2,
+                      elevation: _draftSelectedCategory != _selectedCategory ? 4 : 2,
+                      onPressed: () {
+                        setState(() {
+                          _selectedCategory = _draftSelectedCategory;
+                          _searchCount++; // 検索ごとにマーカーをポップアップさせる
+                          _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
+                        });
+                      },
                     ),
                   ),
                   ...ExperienceCategory.values.map((cat) {
+                    final isSelected = _draftSelectedCategory == cat;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
-                        label: Text(cat.label, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2D3436))),
-                        onSelected: (val) {},
+                        label: Text(cat.label, style: TextStyle(fontWeight: FontWeight.w600, color: isSelected ? Colors.white : const Color(0xFF2D3436))),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          setState(() {
+                            if (isSelected) {
+                              _draftSelectedCategory = null;
+                            } else {
+                              _draftSelectedCategory = cat;
+                            }
+                          });
+                        },
+                        selectedColor: cat.color,
                         backgroundColor: Colors.white,
                         side: BorderSide.none,
                         elevation: 2,
@@ -348,7 +381,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
 
           // 3. Current Location Button (Floating)
           Positioned(
-            bottom: (_isLoadingNearbyCards || _nearbyCards.isNotEmpty) ? 200 : 130, // カードがない時は少し下に配置
+            bottom: (_isLoadingNearbyCards || _displayedNearbyCards.isNotEmpty) ? 200 : 130, // カードがない時は少し下に配置
             right: 16,
             child: SizedBox(
               width: 56,
@@ -379,9 +412,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                       backgroundColor: Colors.red.withOpacity(0.75),
                       icon: Icons.location_off,
                     )
-                  : _nearbyCards.isEmpty
+                  : _displayedNearbyCards.isEmpty
                       ? _buildBanner(
-                          message: 'この周辺にはまだカードがありません\nあなたが最初の投稿者になりませんか？',
+                          message: _selectedCategory == null 
+                            ? 'この周辺にはまだカードがありません\nあなたが最初の投稿者になりませんか？'
+                            : 'この周辺には条件に合うカードがありません',
                           backgroundColor: Colors.black.withOpacity(0.6),
                           icon: Icons.edit_location_alt,
                         )
@@ -460,13 +495,20 @@ class _EncounterMarker extends StatefulWidget {
   State<_EncounterMarker> createState() => _EncounterMarkerState();
 }
 
-class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerProviderStateMixin {
+class _EncounterMarkerState extends State<_EncounterMarker> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _shakeAnimation;
+  late AnimationController _enterController; // ポップアップ登場アニメーション用
 
   @override
   void initState() {
     super.initState();
+    _enterController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _enterController.forward();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -504,6 +546,7 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
 
   @override
   void dispose() {
+    _enterController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -521,9 +564,14 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
 
         return Transform.translate(
           offset: Offset(0, widget.isOpen ? -14 : hoverOffset),
-          child: Transform.rotate(
-            angle: widget.isOpen ? 0 : _shakeAnimation.value,
-            child: AnimatedScale(
+          child: ScaleTransition(
+            scale: CurvedAnimation(
+              parent: _enterController,
+              curve: Curves.elasticOut, // ポンっと跳ねて現れる
+            ),
+            child: Transform.rotate(
+              angle: widget.isOpen ? 0 : _shakeAnimation.value,
+              child: AnimatedScale(
               scale: widget.isOpen ? 1.5 : 1.0,
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutBack, // ポンッと出るような心地よいイージング
@@ -562,8 +610,9 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
               ),
             ),
           ),
-        );
-      },
+        ),
+      );
+    },
       // 重い静的ウィジェットをあらかじめ構築して、AnimatedBuilderの再描画コストをゼロにする
       child: Stack(
         alignment: Alignment.center,
