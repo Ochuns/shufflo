@@ -35,15 +35,23 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
   ExperienceCategory? _draftSelectedCategory;
   int _searchCount = 0;
 
-  void _applyFilterAndShuffle() {
+  static const int _maxDisplayedNearbyCards = 10;
+
+  List<ExperienceCardModel> _buildDisplayedNearbyCards() {
     List<ExperienceCardModel> candidates = _nearbyCards.toList();
     if (_selectedCategory != null) {
       candidates = candidates.where((c) => c.category == _selectedCategory).toList();
     }
     candidates.shuffle();
-    _displayedNearbyCards = candidates.take(10).toList(); // 一度に表示する上限を設けて再抽選の楽しさを出す
+    return candidates.take(_maxDisplayedNearbyCards).toList(); // 一度に表示する上限を設けて再抽選の楽しさを出す
   }
 
+  void _applyFilterAndShuffle() {
+    if (!mounted) return;
+    setState(() {
+      _displayedNearbyCards = _buildDisplayedNearbyCards();
+    });
+  }
   @override
   void initState() {
     super.initState();
