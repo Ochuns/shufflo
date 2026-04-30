@@ -267,6 +267,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final hasPendingFilter = _draftSelectedCategory != _selectedCategory;
     return Scaffold(
       body: Stack(
         children: [
@@ -361,23 +362,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: Builder(builder: (context) {
-                      final hasPendingFilter = _draftSelectedCategory != _selectedCategory;
-                      return ActionChip(
-                        label: Icon(Icons.search, size: 20, color: hasPendingFilter ? Colors.white : const Color(0xFF2D3436)),
-                        backgroundColor: hasPendingFilter ? Colors.blueAccent : Colors.white,
-                        side: BorderSide.none,
-                        elevation: hasPendingFilter ? 4 : 2,
-                        onPressed: () {
-                          setState(() {
-                            _selectedCategory = _draftSelectedCategory;
-                            _searchCount++; // 検索ごとにマーカーをポップアップさせる
-                            _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
-                            _handCards.clear(); // 再抽選時に手札をリセットする
-                          });
-                        },
-                      );
-                    }),
+                    child: ActionChip(
+                      label: Icon(Icons.search, size: 20, color: hasPendingFilter ? Colors.white : const Color(0xFF2D3436)),
+                      backgroundColor: hasPendingFilter ? Colors.blueAccent : Colors.white,
+                      side: BorderSide.none,
+                      elevation: hasPendingFilter ? 4 : 2,
+                      onPressed: () {
+                        setState(() {
+                          _selectedCategory = _draftSelectedCategory;
+                          _searchCount++; // 検索ごとにマーカーをポップアップさせる
+                          _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
+                          _handCards.clear(); // 再抽選時に手札をリセットする
+                        });
+                      },
+                    ),
                   ),
                   ...ExperienceCategory.values.map((cat) {
                     final isSelected = _draftSelectedCategory == cat;
