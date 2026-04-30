@@ -5,11 +5,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/cards_provider.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _showStats = false;
+
+  @override
+  Widget build(BuildContext context) {
     final cardsAsync = ref.watch(cardsProvider);
 
     return DefaultTabController(
@@ -18,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
         backgroundColor: Colors.black,
         appBar: AppBar(
           title: Text(
-            'Profile',
+            'Shufflo',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white),
           ),
           backgroundColor: Colors.black,
@@ -70,20 +77,37 @@ class ProfileScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _showStats = !_showStats;
+                          });
+                        },
+                        icon: Icon(
+                          _showStats ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                // Stats Row
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatItem(cards.length.toString(), 'Cards'),
-                      _buildStatItem('3', 'Decks'),
-                      _buildStatItem('12', 'Friends'),
-                    ],
-                  ),
+                // Stats Drawer
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: _showStats
+                      ? Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatItem(cards.length.toString(), 'Cards'),
+                              _buildStatItem('3', 'Decks'),
+                              _buildStatItem('12', 'Friends'),
+                            ],
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity, height: 16), // 閉じている時も少しだけ余白を残す
                 ),
                 // Tab Bar
                 Container(
