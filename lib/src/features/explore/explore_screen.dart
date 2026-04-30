@@ -619,12 +619,25 @@ class _EncounterMarkerState extends State<_EncounterMarker> with TickerProviderS
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          const Positioned(
-            bottom: 0,
-            child: Icon(
-              Icons.arrow_drop_down_rounded,
-              color: Colors.white,
-              size: 32,
+          // 吹き出しの尻尾部分（アイコンフォント依存による非表示バグを防ぐためContainerで描画）
+          Positioned(
+            bottom: 8, // 値を大きくして尻尾を少し引っ込める（元の4から8に変更）
+            child: Transform.rotate(
+              angle: pi / 4, // 45度回転させてひし形（尻尾）にする
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           Container(
