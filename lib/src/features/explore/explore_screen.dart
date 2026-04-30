@@ -25,11 +25,33 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
   bool _locationError = false; // 位置情報の取得失敗フラグ
 
   List<ExperienceCardModel> _nearbyCards = [];
+  List<ExperienceCardModel> _displayedNearbyCards = [];
   bool _isLoadingNearbyCards = true; // 初回は位置取得までローディング扱い
   int _lastFocusedIndex = 0; // 最後にフォーカスされたインデックスを追跡
   final List<ExperienceCardModel> _handCards = []; // 手札に加わったカード（発見済みのカード）を順番に保持
   AnimationController? _moveAnimationController; // マップ移動アニメーション用コントローラー
 
+  ExperienceCategory? _selectedCategory;
+  ExperienceCategory? _draftSelectedCategory;
+  int _searchCount = 0;
+
+  static const int _maxDisplayedNearbyCards = 10;
+
+  List<ExperienceCardModel> _buildDisplayedNearbyCards() {
+    List<ExperienceCardModel> candidates = _nearbyCards.toList();
+    if (_selectedCategory != null) {
+      candidates = candidates.where((c) => c.category == _selectedCategory).toList();
+    }
+    candidates.shuffle();
+    return candidates.take(_maxDisplayedNearbyCards).toList(); // 一度に表示する上限を設けて再抽選の楽しさを出す
+  }
+
+  void _applyFilterAndShuffle() {
+    if (!mounted) return;
+    setState(() {
+      _displayedNearbyCards = _buildDisplayedNearbyCards();
+    });
+  }
   @override
   void initState() {
     super.initState();
@@ -123,6 +145,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     if (!mounted) return;
     setState(() {
       _nearbyCards = cards;
+      _applyFilterAndShuffle();
       _isLoadingNearbyCards = false;
     });
   }
@@ -162,15 +185,46 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
     );
   }
 
+  List<ExperienceCardModel>? _handCardIndexSource;
+  int _handCardIndexSourceLength = -1;
+  Map<Object?, int> _handCardIndexById = const <Object?, int>{};
+
+  Map<Object?, int> _getHandCardIndexById() {
+    final collected = _handCards;
+    if (!identical(_handCardIndexSource, collected) ||
+        _handCardIndexSourceLength != collected.length) {
+      _handCardIndexById = <Object?, int>{
+        for (int i = 0; i < collected.length; i++) collected[i].id: i,
+      };
+      _handCardIndexSource = collected;
+      _handCardIndexSourceLength = collected.length;
+    }
+    return _handCardIndexById;
+  }
+
   Marker _buildEncounterMarker(ExperienceCardModel card) {
+    bool isOpen = false;
+    final collected = _handCards;
+    final handCardIndexById = _getHandCardIndexById();
+    if (_pageController.hasClients && _pageController.position.haveDimensions) {
+      double page = _pageController.page ?? 0.0;
+      final handIndex = handCardIndexById[card.id];
+      if (handIndex != null && (page - handIndex).abs() < 0.5) {
+        isOpen = true;
+      }
+    } else {
+      // 初期状態
+      if (collected.isNotEmpty && collected[0].id == card.id) isOpen = true;
+    }
+
+    final isViewed = _handCards.any((c) => c.id == card.id);
+
     return Marker(
       point: LatLng(card.latitude!, card.longitude!),
       width: 64,
       height: 64,
       child: GestureDetector(
         onTap: () async {
-          final isViewed = _handCards.any((c) => c.id == card.id);
-          
           if (isViewed) {
             // すでに持っているカードなら、手札の中のそのカードまでスクロール
             final handIndex = _handCards.indexWhere((c) => c.id == card.id);
@@ -201,29 +255,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
             }
           }
         },
-        child: AnimatedBuilder(
-          animation: _pageController,
-          builder: (context, child) {
-            bool isOpen = false;
-            final collected = _handCards;
-            if (_pageController.hasClients &&
-                _pageController.position.haveDimensions) {
-              double page = _pageController.page ?? 0.0;
-              // 手札の中のこのカードのインデックスを探す
-              final handIndex = collected.indexWhere((c) => c.id == card.id);
-              if (handIndex != -1 && (page - handIndex).abs() < 0.5) {
-                isOpen = true;
-              }
-            } else {
-              // 初期状態
-              if (collected.isNotEmpty && collected[0].id == card.id) isOpen = true;
-            }
-            return _EncounterMarker(
-              card: card,
-              isOpen: isOpen,
-              isViewed: _handCards.any((c) => c.id == card.id),
-            );
-          },
+        child: _EncounterMarker(
+          key: ValueKey('${card.id}_$_searchCount'), // 検索のたびにKeyを変えて再描画（ポップアップ）させる
+          card: card,
+          isOpen: isOpen,
+          isViewed: isViewed,
         ),
       ),
     );
@@ -231,6 +267,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final hasPendingFilter = _draftSelectedCategory != _selectedCategory;
     return Scaffold(
       body: Stack(
         children: [
@@ -284,13 +321,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                   }
 
                   // 1. フォーカスされていないマーカーを先に描画（層を下にする）
-                  for (int i = 0; i < _nearbyCards.length; i++) {
-                    final card = _nearbyCards[i];
+                  for (int i = 0; i < _displayedNearbyCards.length; i++) {
+                    final card = _displayedNearbyCards[i];
                     if (card.latitude == null || card.longitude == null) continue;
                     
                     // 手札にあるかチェック
                     bool isFocused = false;
-                    if (collected.isNotEmpty && focusedIndex < collected.length) {
+                    if (collected.isNotEmpty && focusedIndex >= 0 && focusedIndex < collected.length) {
                       isFocused = (collected[focusedIndex].id == card.id);
                     }
                     if (isFocused) continue;
@@ -299,7 +336,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                   }
 
                   // 2. フォーカスされている（＝現在見ている）マーカーを最後に描画（層を一番上にする）
-                  if (collected.isNotEmpty && focusedIndex < collected.length) {
+                  if (collected.isNotEmpty && focusedIndex >= 0 && focusedIndex < collected.length) {
                     final focusedCard = collected[focusedIndex];
                     if (focusedCard.latitude != null && focusedCard.longitude != null) {
                       // フォーカスされているマーカーを最前面に描画
@@ -323,21 +360,40 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
               clipBehavior: Clip.none,
               child: Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Chip(
-                      label: Icon(Icons.search, size: 20),
-                      backgroundColor: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      label: Icon(Icons.search, size: 20, color: hasPendingFilter ? Colors.white : const Color(0xFF2D3436)),
+                      backgroundColor: hasPendingFilter ? Colors.blueAccent : Colors.white,
                       side: BorderSide.none,
-                      elevation: 2,
+                      elevation: hasPendingFilter ? 4 : 2,
+                      onPressed: () {
+                        setState(() {
+                          _selectedCategory = _draftSelectedCategory;
+                          _searchCount++; // 検索ごとにマーカーをポップアップさせる
+                          _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
+                          _handCards.clear(); // 再抽選時に手札をリセットする
+                        });
+                      },
                     ),
                   ),
                   ...ExperienceCategory.values.map((cat) {
+                    final isSelected = _draftSelectedCategory == cat;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
-                        label: Text(cat.label, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2D3436))),
-                        onSelected: (val) {},
+                        label: Text(cat.label, style: TextStyle(fontWeight: FontWeight.w600, color: isSelected ? Colors.white : const Color(0xFF2D3436))),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          setState(() {
+                            if (isSelected) {
+                              _draftSelectedCategory = null;
+                            } else {
+                              _draftSelectedCategory = cat;
+                            }
+                          });
+                        },
+                        selectedColor: cat.color,
                         backgroundColor: Colors.white,
                         side: BorderSide.none,
                         elevation: 2,
@@ -352,7 +408,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
 
           // 3. Current Location Button (Floating)
           Positioned(
-            bottom: (_isLoadingNearbyCards || _nearbyCards.isNotEmpty) ? 200 : 130, // カードがない時は少し下に配置
+            bottom: (_isLoadingNearbyCards || _displayedNearbyCards.isNotEmpty) ? 200 : 130, // カードがない時は少し下に配置
             right: 16,
             child: SizedBox(
               width: 56,
@@ -383,9 +439,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                       backgroundColor: Colors.red.withOpacity(0.75),
                       icon: Icons.location_off,
                     )
-                  : _nearbyCards.isEmpty
+                  : _displayedNearbyCards.isEmpty
                       ? _buildBanner(
-                          message: 'この周辺にはまだカードがありません\nあなたが最初の投稿者になりませんか？',
+                          message: _selectedCategory == null 
+                            ? 'この周辺にはまだカードがありません\nあなたが最初の投稿者になりませんか？'
+                            : 'この周辺には条件に合うカードがありません',
                           backgroundColor: Colors.black.withOpacity(0.6),
                           icon: Icons.edit_location_alt,
                         )
@@ -414,7 +472,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                               scale = index == 0 ? 1.0 : 0.75;
                             }
 
-                            final double offsetY = (1 - scale) * 120; // 少しだけ位置調整をマイルドに
+                            final double offsetY = (1 - scale) * 120;
 
                             return Transform.translate(
                               offset: Offset(0, offsetY),
@@ -454,6 +512,7 @@ class _EncounterMarker extends StatefulWidget {
   final bool isOpen;
   final bool isViewed; // 一度でも選択（表示）されたかどうか
   const _EncounterMarker({
+    super.key,
     required this.card,
     this.isOpen = false,
     this.isViewed = false,
@@ -463,13 +522,20 @@ class _EncounterMarker extends StatefulWidget {
   State<_EncounterMarker> createState() => _EncounterMarkerState();
 }
 
-class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerProviderStateMixin {
+class _EncounterMarkerState extends State<_EncounterMarker> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _shakeAnimation;
+  late AnimationController _enterController; // ポップアップ登場アニメーション用
 
   @override
   void initState() {
     super.initState();
+    _enterController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _enterController.forward();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -479,7 +545,6 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
       _controller.repeat();
     }
 
-    // 震えるようなアニメーションを有機的なカーブに変更
     _shakeAnimation = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(begin: 0, end: 0.05).chain(CurveTween(curve: Curves.easeInOutSine)),
@@ -508,6 +573,7 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
 
   @override
   void dispose() {
+    _enterController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -517,111 +583,141 @@ class _EncounterMarkerState extends State<_EncounterMarker> with SingleTickerPro
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        // サイン波を使って滑らかに上下浮遊させる
-        final hoverOffset = sin(_controller.value * 2 * pi) * 2.5;
+        final floatValue = sin(_controller.value * 2 * pi);
+        final hoverOffset = floatValue * 2.5;
+        
+        final auraOpacity = 0.2 + ((floatValue + 1) / 2) * 0.6;
+        final auraScale = 1.0 + ((floatValue + 1) / 2) * 0.3;
+
         return Transform.translate(
           offset: Offset(0, widget.isOpen ? -14 : hoverOffset),
-          child: Transform.rotate(
-            angle: widget.isOpen ? 0 : _shakeAnimation.value,
-            child: child,
-          ),
-        );
-      },
-      child: AnimatedScale(
-        scale: widget.isOpen ? 1.5 : 1.0,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutBack, // ポンッと出るような心地よいイージング
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            // キラキラ演出（未発見時のみ星を表示）
-            if (!widget.isViewed) ...[
-              _buildSparkle(top: -10, left: -10, size: 14, delay: 0),
-              _buildSparkle(top: -12, right: -5, size: 10, delay: 0.5),
-              _buildSparkle(bottom: 5, right: -12, size: 12, delay: 0.2),
-            ],
-            // 吹き出しのしっぽ部分
-            Positioned(
-              bottom: 0,
-              child: Icon(
-                Icons.arrow_drop_down_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
+          child: ScaleTransition(
+            scale: CurvedAnimation(
+              parent: _enterController,
+              curve: Curves.elasticOut, // ポンっと跳ねて現れる
             ),
-            // 白い丸い吹き出し
-            Container(
-              width: 40,
-              height: 40,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                  // 未発見（！）の時だけ、黄色のキラキラ光るオーラをつける
+            child: Transform.rotate(
+              angle: widget.isOpen ? 0 : _shakeAnimation.value,
+              child: AnimatedScale(
+              scale: widget.isOpen ? 1.5 : 1.0,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutBack, // ポンッと出るような心地よいイージング
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
                   if (!widget.isViewed)
-                    BoxShadow(
-                      color: Colors.amber.withValues(
-                        alpha: 0.4 + (sin(_controller.value * 2 * pi) * 0.2 + 0.2), 
-                      ),
-                      blurRadius: 10 + (sin(_controller.value * 2 * pi) * 6 + 6),
-                      spreadRadius: 1 + (sin(_controller.value * 2 * pi) * 3 + 3),
-                    ),
-                ],
-              ),
-              child: Center(
-                child: widget.isViewed
-                    ? Icon(
-                        widget.card.category.icon,
-                        color: widget.card.category.color,
-                        size: 24,
-                      )
-                    : const Text(
-                        '!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
+                    Transform.scale(
+                      scale: auraScale,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.amber.withValues(alpha: auraOpacity),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+
+                  // キラキラ演出
+                  if (!widget.isViewed) ...[
+                    _buildSparkle(top: -10, left: -10, size: 14, delay: 0, val: _controller.value),
+                    _buildSparkle(top: -12, right: -5, size: 10, delay: 0.5, val: _controller.value),
+                    _buildSparkle(bottom: 5, right: -12, size: 12, delay: 0.2, val: _controller.value),
+                  ],
+                  child!,
+                ],
               ),
             ),
-          ],
+          ),
         ),
+      );
+    },
+      // 重い静的ウィジェットをあらかじめ構築して、AnimatedBuilderの再描画コストをゼロにする
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          // 吹き出しの尻尾部分（アイコンフォント依存による非表示バグを防ぐためContainerで描画）
+          Positioned(
+            bottom: 8, // 値を大きくして尻尾を少し引っ込める（元の4から8に変更）
+            child: Transform.rotate(
+              angle: pi / 4, // 45度回転させてひし形（尻尾）にする
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: widget.isViewed
+                  ? Icon(
+                      widget.card.category.icon,
+                      color: widget.card.category.color,
+                      size: 24,
+                    )
+                  : const Text(
+                      '!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // キラキラの星を作るヘルパー
-  Widget _buildSparkle({double? top, double? left, double? right, double? bottom, required double size, required double delay}) {
+  // キラキラの星を作るヘルパー（個別のAnimatedBuilderを排除）
+  Widget _buildSparkle({double? top, double? left, double? right, double? bottom, required double size, required double delay, required double val}) {
+    final sinVal = sin((val + delay) * 2 * pi);
+    final opacity = (sinVal * 0.5 + 0.5).clamp(0.0, 1.0);
+    final scale = 0.5 + (sinVal * 0.5 + 0.5) * 0.5;
+    
     return Positioned(
       top: top,
       left: left,
       right: right,
       bottom: bottom,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          // 個別にタイミングをずらしてキラキラさせる
-          final val = sin((_controller.value + delay) * 2 * pi);
-          final opacity = (val * 0.5 + 0.5).clamp(0.0, 1.0);
-          final scale = 0.5 + (val * 0.5 + 0.5) * 0.5;
-          return Opacity(
-            opacity: opacity,
-            child: Transform.scale(
-              scale: scale,
-              child: child,
-            ),
-          );
-        },
-        child: Icon(Icons.star_rounded, color: Colors.amber, size: size),
+      child: Transform.scale(
+        scale: scale,
+        child: Icon(Icons.star_rounded, color: Colors.amber.withValues(alpha: opacity), size: size),
       ),
     );
   }
