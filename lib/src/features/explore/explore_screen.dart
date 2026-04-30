@@ -217,14 +217,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
       if (collected.isNotEmpty && collected[0].id == card.id) isOpen = true;
     }
 
+    final isViewed = _handCards.any((c) => c.id == card.id);
+
     return Marker(
       point: LatLng(card.latitude!, card.longitude!),
       width: 64,
       height: 64,
       child: GestureDetector(
         onTap: () async {
-          final isViewed = _handCards.any((c) => c.id == card.id);
-          
           if (isViewed) {
             // すでに持っているカードなら、手札の中のそのカードまでスクロール
             final handIndex = _handCards.indexWhere((c) => c.id == card.id);
@@ -259,7 +259,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
           key: ValueKey('${card.id}_$_searchCount'), // 検索のたびにKeyを変えて再描画（ポップアップ）させる
           card: card,
           isOpen: isOpen,
-          isViewed: _handCards.any((c) => c.id == card.id),
+          isViewed: isViewed,
         ),
       ),
     );
@@ -361,20 +361,23 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: ActionChip(
-                      label: Icon(Icons.search, size: 20, color: _draftSelectedCategory != _selectedCategory ? Colors.white : const Color(0xFF2D3436)),
-                      backgroundColor: _draftSelectedCategory != _selectedCategory ? Colors.blueAccent : Colors.white,
-                      side: BorderSide.none,
-                      elevation: _draftSelectedCategory != _selectedCategory ? 4 : 2,
-                      onPressed: () {
-                        setState(() {
-                          _selectedCategory = _draftSelectedCategory;
-                          _searchCount++; // 検索ごとにマーカーをポップアップさせる
-                          _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
-                          _handCards.clear(); // 再抽選時に手札をリセットする
-                        });
-                      },
-                    ),
+                    child: Builder(builder: (context) {
+                      final hasPendingFilter = _draftSelectedCategory != _selectedCategory;
+                      return ActionChip(
+                        label: Icon(Icons.search, size: 20, color: hasPendingFilter ? Colors.white : const Color(0xFF2D3436)),
+                        backgroundColor: hasPendingFilter ? Colors.blueAccent : Colors.white,
+                        side: BorderSide.none,
+                        elevation: hasPendingFilter ? 4 : 2,
+                        onPressed: () {
+                          setState(() {
+                            _selectedCategory = _draftSelectedCategory;
+                            _searchCount++; // 検索ごとにマーカーをポップアップさせる
+                            _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
+                            _handCards.clear(); // 再抽選時に手札をリセットする
+                          });
+                        },
+                      );
+                    }),
                   ),
                   ...ExperienceCategory.values.map((cat) {
                     final isSelected = _draftSelectedCategory == cat;
