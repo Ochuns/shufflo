@@ -346,6 +346,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                           _selectedCategory = _draftSelectedCategory;
                           _searchCount++; // 検索ごとにマーカーをポップアップさせる
                           _applyFilterAndShuffle(); // 条件に合うカードを再抽選してマップに配置
+                          _handCards.clear(); // 再抽選時に手札をリセットする
                         });
                       },
                     ),
