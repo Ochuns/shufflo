@@ -4,6 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/cards_provider.dart';
+import '../../models/pinned_cards_provider.dart';
+import '../../common_widgets/tcg_card_view.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -161,23 +164,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildFavoritesTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade800),
-          const SizedBox(height: 16),
-          Text(
-            'No Tagged Favorites Yet',
-            style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+    final pinnedIdsAsync = ref.watch(pinnedCardsProvider);
+    final cardsAsync = ref.watch(cardsProvider);
+    
+    // pinnedIdsがまだロード中の場合は空セットとして扱い、ちらつきを防ぐ
+    final pinnedIds = pinnedIdsAsync.value ?? {};
+
+    return cardsAsync.when(
+      data: (cards) {
+        final pinnedCards = cards.where((c) => pinnedIds.contains(c.id)).toList();
+        
+        if (pinnedCards.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade800),
+                const SizedBox(height: 16),
+                Text(
+                  'No Pinned Cards Yet',
+                  style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Pin cards from their detail screen to show them here.',
+                  style: GoogleFonts.inter(color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 0.65, // TcgCardView is 6/9.5
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Tag your favorite cards to see them here.',
-            style: GoogleFonts.inter(color: Colors.grey.shade700),
-          ),
-        ],
-      ),
+          itemCount: pinnedCards.length,
+          itemBuilder: (context, index) {
+            final card = pinnedCards[index];
+            return GestureDetector(
+              onTap: () => context.push('/card_detail', extra: card),
+              child: TcgCardView(model: card, isCompact: true),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => const Center(child: Text('Error loading favorites', style: TextStyle(color: Colors.red))),
     );
   }
 

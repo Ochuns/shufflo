@@ -7,6 +7,7 @@ import '../../models/cards_provider.dart';
 import '../../models/supabase_repository.dart';
 import '../../models/deck_model.dart';
 import '../../models/decks_provider.dart';
+import '../../models/pinned_cards_provider.dart';
 import '../../common_widgets/tcg_card_view.dart';
 
 class CardDetailScreen extends ConsumerWidget {
@@ -41,6 +42,8 @@ class CardDetailScreen extends ConsumerWidget {
           d.cards.any((c) => c.id == latestModel.id || c.postId == latestModel.postId)
         ).firstOrNull;
 
+        final isPinned = ref.watch(pinnedCardsProvider).value?.contains(latestModel.id) ?? false;
+
         return Scaffold(
           backgroundColor: const Color(0xFF121212), 
           appBar: showAppBar ? AppBar(
@@ -54,6 +57,22 @@ class CardDetailScreen extends ConsumerWidget {
                   onPressed: () => context.push('/deck_playback', extra: parentDeck),
                   tooltip: 'View in Deck',
                 ),
+              IconButton(
+                icon: Icon(
+                  isPinned ? LucideIcons.pin : LucideIcons.pinOff,
+                  color: isPinned ? Colors.blueAccent : Colors.white,
+                ),
+                onPressed: () {
+                  ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isPinned ? 'Unpinned card' : 'Pinned card to Favorites'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                tooltip: isPinned ? 'Unpin Card' : 'Pin Card',
+              ),
               if (isOwner) ...[
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),

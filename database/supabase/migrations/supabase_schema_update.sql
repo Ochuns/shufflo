@@ -117,3 +117,33 @@ CREATE POLICY "Users can update their own private cards" ON private_cards
 DROP POLICY IF EXISTS "Anyone can see active posts" ON posts;
 CREATE POLICY "Anyone can see active posts" ON posts
   FOR SELECT USING (deleted_at IS NULL OR auth.uid() = user_id);
+
+-- ==========================================
+-- Shufflo Database Update: Tags
+-- ==========================================
+
+-- タグ付け用のカラム（配列）を追加
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE public_cards ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE private_cards ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+
+-- タグ検索を高速化するためのGINインデックスを作成
+CREATE INDEX IF NOT EXISTS posts_tags_idx ON posts USING GIN (tags);
+CREATE INDEX IF NOT EXISTS public_cards_tags_idx ON public_cards USING GIN (tags);
+CREATE INDEX IF NOT EXISTS private_cards_tags_idx ON private_cards USING GIN (tags);
+
+-- ==========================================
+-- Shufflo Database Update: Pinned Cards
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS user_pinned_cards (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    card_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    PRIMARY KEY (user_id, card_id)
+);
+
+-- RLS（権限管理）の設定
+ALTER TABLE user_pinned_cards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own pinned cards" ON user_pinned_cards
+    FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);

@@ -96,6 +96,7 @@ class SupabaseRepository {
     double? latitude,
     double? longitude,
     String? deckId,
+    List<String>? tags,
   }) async {
     await _ensureUserExists();
 
@@ -133,6 +134,7 @@ class SupabaseRepository {
         'comment': publicComment,
         'public_image_url': pubImageUrl,
         'private_image_url': privImageUrl,
+        'tags': tags ?? [],
       }).select('id').single();
       final postId = postInsert['id'];
 
@@ -147,7 +149,8 @@ class SupabaseRepository {
         'comment': publicComment,
         'image_url': pubImageUrl,
         'local_image_path': storedPubFileName,
-        'location_coords': 'POINT($lon $lat)'
+        'location_coords': 'POINT($lon $lat)',
+        'tags': tags ?? [],
       });
 
       // Private Card
@@ -160,6 +163,7 @@ class SupabaseRepository {
         'image_url': privImageUrl,
         'local_image_path': storedPrivFileName,
         'visited_date': DateTime.now().toIso8601String(),
+        'tags': tags ?? [],
       });
 
       return postId;
@@ -191,6 +195,7 @@ class SupabaseRepository {
       createdAt: row['created_at'] != null ? DateTime.parse(row['created_at']).toLocal() : null,
       latitude: row['locations'] != null ? (row['locations']['latitude'] as num?)?.toDouble() : null,
       longitude: row['locations'] != null ? (row['locations']['longitude'] as num?)?.toDouble() : null,
+      tags: (row['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
@@ -236,6 +241,7 @@ class SupabaseRepository {
           createdAt: row['visited_date'] != null ? DateTime.parse(row['visited_date']).toLocal() : null,
           latitude: row['locations'] != null ? (row['locations']['latitude'] as num?)?.toDouble() : null,
           longitude: row['locations'] != null ? (row['locations']['longitude'] as num?)?.toDouble() : null,
+          tags: (row['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
         ));
       }
     }
@@ -296,12 +302,14 @@ class SupabaseRepository {
     required double rating,
     required String publicComment,
     required String privateComment,
+    List<String>? tags,
   }) async {
     await _supabase.from('posts').update({
       'title': title,
       'category': category.name,
       'rating': rating.toInt(),
       'comment': publicComment,
+      if (tags != null) 'tags': tags,
     }).eq('id', postId);
 
     await _supabase.from('public_cards').update({
@@ -309,10 +317,12 @@ class SupabaseRepository {
       'category': category.name,
       'rating': rating.toInt(),
       'comment': publicComment,
+      if (tags != null) 'tags': tags,
     }).eq('post_id', postId);
 
     await _supabase.from('private_cards').update({
       'comment': privateComment,
+      if (tags != null) 'tags': tags,
     }).eq('post_id', postId);
   }
 
@@ -355,6 +365,7 @@ class SupabaseRepository {
             localImagePath: null,
             rarity: CardRarity.values.firstWhere((e) => e.name == (postData?['rarity'] ?? 'common'), orElse: () => CardRarity.common),
             createdAt: pc['visited_date'] != null ? DateTime.parse(pc['visited_date']).toLocal() : null,
+            tags: (pc['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           ));
         }
 
@@ -401,5 +412,46 @@ class SupabaseRepository {
   Future<void> deleteDeck(String deckId) async {
     // デッキを削除するとON DELETE SET NULL（または CASCADE）により関連は自動処理される
     await _supabase.from('decks').delete().eq('id', deckId);
+  }
+
+  // --- Pinned Cards (Favorites) ---
+
+  Future<Set<String>> fetchPinnedCardIds() async {
+    final userId = currentUserId;
+    if (userId == null) return {};
+
+    try {
+      final response = await _supabase
+          .from('user_pinned_cards')
+          .select('card_id')
+          .eq('user_id', userId);
+          
+      return response.map<String>((row) => row['card_id'].toString()).toSet();
+    } catch (e) {
+      debugPrint('fetchPinnedCardIds Error: $e');
+      return {};
+    }
+  }
+
+  Future<void> togglePinCard(String cardId, bool isPinned) async {
+    final userId = currentUserId;
+    if (userId == null) return;
+
+    try {
+      if (isPinned) {
+        await _supabase.from('user_pinned_cards').insert({
+          'user_id': userId,
+          'card_id': cardId,
+        });
+      } else {
+        await _supabase
+            .from('user_pinned_cards')
+            .delete()
+            .eq('user_id', userId)
+            .eq('card_id', cardId);
+      }
+    } catch (e) {
+      debugPrint('togglePinCard Error: $e');
+    }
   }
 }
