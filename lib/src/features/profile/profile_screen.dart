@@ -198,7 +198,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
+            crossAxisCount: 2,
             childAspectRatio: 0.65, // TcgCardView is 6/9.5
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
