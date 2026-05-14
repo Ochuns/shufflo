@@ -77,12 +77,12 @@ class CardDetailScreen extends ConsumerWidget {
                     ? () async {
                         final wasPinned = isPinned;
                         ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = true;
-                        bool success = false;
-                        try {
-                          success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
-                        } finally {
+                        final success = await ref
+                            .read(pinnedCardsProvider.notifier)
+                            .togglePin(latestModel.id)
+                            .whenComplete(() {
                           ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = false;
-                        }
+                        });
 
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,7 +99,9 @@ class CardDetailScreen extends ConsumerWidget {
                     : null,
                 tooltip: canTogglePin
                     ? (isPinned ? 'Unpin Card' : 'Pin Card')
-                    : (pinnedCardsAsync.isLoading ? 'Loading Favorites' : 'Pin temporarily unavailable'),
+                    : (pinnedCardsAsync.isLoading
+                        ? 'Loading Favorites'
+                        : 'Unable to load pin status'),
               ),
               if (isOwner) ...[
                 IconButton(
