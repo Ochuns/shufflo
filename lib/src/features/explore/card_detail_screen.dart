@@ -77,29 +77,23 @@ class CardDetailScreen extends ConsumerWidget {
                     ? () async {
                         final wasPinned = isPinned;
                         ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = true;
-                        bool success;
+                        bool success = false;
                         try {
                           success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
-                        } catch (e, stackTrace) {
-                          debugPrint(
-                            'Failed to toggle pin for card ${latestModel.id}: $e\n$stackTrace',
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                success
+                                    ? (wasPinned ? 'Unpinned card' : 'Pinned card to Favorites')
+                                    : 'Failed to update Favorites',
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
                           );
-                          success = false;
                         } finally {
                           ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = false;
                         }
-
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              success
-                                  ? (wasPinned ? 'Unpinned card' : 'Pinned card to Favorites')
-                                  : 'Failed to update Favorites',
-                            ),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
                       }
                     : null,
                 tooltip: canTogglePin
