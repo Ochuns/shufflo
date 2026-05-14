@@ -138,9 +138,11 @@ CREATE INDEX IF NOT EXISTS private_cards_tags_idx ON private_cards USING GIN (ta
 
 CREATE TABLE IF NOT EXISTS user_pinned_cards (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    post_id UUID REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     card_id UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    PRIMARY KEY (user_id, card_id)
+    PRIMARY KEY (user_id, post_id),
+    UNIQUE (user_id, card_id)
 );
 
 -- RLS（権限管理）の設定
