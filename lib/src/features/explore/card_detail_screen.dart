@@ -75,6 +75,7 @@ class CardDetailScreen extends ConsumerWidget {
                       ),
                 onPressed: canTogglePin
                     ? () async {
+                        final wasPinned = isPinned;
                         ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = true;
                         bool success = false;
                         try {
@@ -88,7 +89,7 @@ class CardDetailScreen extends ConsumerWidget {
                           SnackBar(
                             content: Text(
                               success
-                                  ? (isPinned ? 'Unpinned card' : 'Pinned card to Favorites')
+                                  ? (wasPinned ? 'Unpinned card' : 'Pinned card to Favorites')
                                   : 'Failed to update Favorites',
                             ),
                             duration: const Duration(seconds: 1),
