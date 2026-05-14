@@ -10,6 +10,8 @@ import '../../models/decks_provider.dart';
 import '../../models/pinned_cards_provider.dart';
 import '../../common_widgets/tcg_card_view.dart';
 
+final _pinActionInProgressProvider = StateProvider.family<bool, String>((ref, _) => false);
+
 class CardDetailScreen extends ConsumerWidget {
   final ExperienceCardModel model;
   final bool showAppBar;
@@ -42,7 +44,10 @@ class CardDetailScreen extends ConsumerWidget {
           d.cards.any((c) => c.id == latestModel.id || c.postId == latestModel.postId)
         ).firstOrNull;
 
-        final isPinned = ref.watch(pinnedCardsProvider).value?.contains(latestModel.id) ?? false;
+        final pinnedCardsAsync = ref.watch(pinnedCardsProvider);
+        final isPinActionInProgress = ref.watch(_pinActionInProgressProvider(latestModel.id));
+        final isPinned = pinnedCardsAsync.valueOrNull?.contains(latestModel.id) ?? false;
+        final canTogglePin = pinnedCardsAsync.hasValue && !isPinActionInProgress;
 
         return Scaffold(
           backgroundColor: const Color(0xFF121212), 
@@ -58,20 +63,42 @@ class CardDetailScreen extends ConsumerWidget {
                   tooltip: 'View in Deck',
                 ),
               IconButton(
-                icon: Icon(
-                  isPinned ? LucideIcons.pin : LucideIcons.pinOff,
-                  color: isPinned ? Colors.blueAccent : Colors.white,
-                ),
-                onPressed: () {
-                  ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isPinned ? 'Unpinned card' : 'Pinned card to Favorites'),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-                tooltip: isPinned ? 'Unpin Card' : 'Pin Card',
+                icon: isPinActionInProgress || pinnedCardsAsync.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        isPinned ? LucideIcons.pin : LucideIcons.pinOff,
+                        color: isPinned ? Colors.blueAccent : Colors.white,
+                      ),
+                onPressed: canTogglePin
+                    ? () async {
+                        ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = true;
+                        bool success = false;
+                        try {
+                          success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
+                        } finally {
+                          ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = false;
+                        }
+
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? ((ref.read(pinnedCardsProvider).valueOrNull?.contains(latestModel.id) ?? false)
+                                    ? 'Pinned card to Favorites'
+                                    : 'Unpinned card')
+                                : 'Failed to update Favorites'),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      }
+                    : null,
+                tooltip: canTogglePin
+                    ? (isPinned ? 'Unpin Card' : 'Pin Card')
+                    : (pinnedCardsAsync.isLoading ? 'Loading Favorites' : 'Pin temporarily unavailable'),
               ),
               if (isOwner) ...[
                 IconButton(

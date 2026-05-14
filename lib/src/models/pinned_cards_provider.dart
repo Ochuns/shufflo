@@ -8,9 +8,9 @@ class PinnedCardsNotifier extends AsyncNotifier<Set<String>> {
     return await repo.fetchPinnedCardIds();
   }
 
-  Future<void> togglePin(String cardId) async {
+  Future<bool> togglePin(String cardId) async {
     final previousState = state;
-    if (!state.hasValue) return;
+    if (!state.hasValue) return false;
     
     final currentSet = state.value!;
     final isCurrentlyPinned = currentSet.contains(cardId);
@@ -25,9 +25,11 @@ class PinnedCardsNotifier extends AsyncNotifier<Set<String>> {
     try {
       final repo = ref.read(supabaseRepositoryProvider);
       await repo.togglePinCard(cardId, !isCurrentlyPinned);
+      return true;
     } catch (e) {
       // 失敗した場合は元に戻す
       state = previousState;
+      return false;
     }
   }
 }
