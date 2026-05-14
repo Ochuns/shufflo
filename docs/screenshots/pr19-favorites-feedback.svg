@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+  <rect width="1400" height="760" fill="#121212"/>
+  <text x="40" y="64" fill="#ffffff" font-family="Arial, sans-serif" font-size="42" font-weight="700">Profile/Favorites UI feedback updates</text>
+
+  <rect x="40" y="110" width="640" height="600" rx="20" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="2"/>
+  <text x="72" y="168" fill="#8ab4ff" font-family="Arial, sans-serif" font-size="32" font-weight="700">Card Detail Pin Button</text>
+  <text x="72" y="228" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Loading/Error state no longer defaults to unpinned icon</text>
+  <text x="72" y="290" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Pin action disabled while status is loading or request is in-flight</text>
+  <text x="72" y="352" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Tap now awaits toggle result and shows success/failure feedback</text>
+
+  <rect x="720" y="110" width="640" height="600" rx="20" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="2"/>
+  <text x="752" y="168" fill="#8ab4ff" font-family="Arial, sans-serif" font-size="32" font-weight="700">Profile Favorites Tab</text>
+  <text x="752" y="228" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Render now branches on pinnedIdsAsync.when(...)</text>
+  <text x="752" y="290" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Shows loading indicator while pinned IDs are loading</text>
+  <text x="752" y="352" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Avoids temporary “No Pinned Cards Yet” flicker</text>
+  <text x="752" y="414" fill="#ffffff" font-family="Arial, sans-serif" font-size="26">• Error state shown when favorites IDs fail to load</text>
+</svg>

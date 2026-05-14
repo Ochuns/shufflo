@@ -4,21 +4,31 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/cards_provider.dart';
+import '../../models/pinned_cards_provider.dart';
+import '../../common_widgets/tcg_card_view.dart';
+import 'package:go_router/go_router.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _showStats = false;
+
+  @override
+  Widget build(BuildContext context) {
     final cardsAsync = ref.watch(cardsProvider);
 
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
           title: Text(
-            'Profile',
+            'Shufflo',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white),
           ),
           backgroundColor: Colors.black,
@@ -70,20 +80,37 @@ class ProfileScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _showStats = !_showStats;
+                          });
+                        },
+                        icon: Icon(
+                          _showStats ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                // Stats Row
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatItem(cards.length.toString(), 'Cards'),
-                      _buildStatItem('3', 'Decks'),
-                      _buildStatItem('12', 'Friends'),
-                    ],
-                  ),
+                // Stats Drawer
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: _showStats
+                      ? Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatItem(cards.length.toString(), 'Cards'),
+                              _buildStatItem('3', 'Decks'),
+                              _buildStatItem('12', 'Friends'),
+                            ],
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity, height: 16), // 閉じている時も少しだけ余白を残す
                 ),
                 // Tab Bar
                 Container(
@@ -95,7 +122,6 @@ class ProfileScreen extends ConsumerWidget {
                     indicatorWeight: 2,
                     labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
                     tabs: const [
-                      Tab(icon: Icon(LucideIcons.user, size: 20), text: 'Info'),
                       Tab(icon: Icon(LucideIcons.heart, size: 20), text: 'Favorites'),
                       Tab(icon: Icon(LucideIcons.users, size: 20), text: 'Friends'),
                     ],
@@ -105,7 +131,6 @@ class ProfileScreen extends ConsumerWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _buildProfileInfoTab(),
                       _buildFavoritesTab(),
                       _buildFriendSearchTab(),
                     ],
@@ -138,34 +163,62 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileInfoTab() {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        _buildInfoCard('Bio', 'I love capturing the sounds and visuals of the city. Every card is a new story.'),
-        const SizedBox(height: 16),
-        _buildInfoCard('Location', 'Tokyo, Japan'),
-      ],
-    );
-  }
-
   Widget _buildFavoritesTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade800),
-          const SizedBox(height: 16),
-          Text(
-            'No Tagged Favorites Yet',
-            style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tag your favorite cards to see them here.',
-            style: GoogleFonts.inter(color: Colors.grey.shade700),
-          ),
-        ],
+    final pinnedIdsAsync = ref.watch(pinnedCardsProvider);
+    final cardsAsync = ref.watch(cardsProvider);
+
+    return pinnedIdsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => const Center(
+        child: Text('Error loading favorites', style: TextStyle(color: Colors.red)),
+      ),
+      data: (pinnedIds) => cardsAsync.when(
+        data: (cards) {
+          final pinnedCards = cards.where((c) => pinnedIds.contains(c.id)).toList();
+
+          if (pinnedCards.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade800),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Pinned Cards Yet',
+                    style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pin cards from their detail screen to show them here.',
+                    style: GoogleFonts.inter(color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.65, // TcgCardView is 6/9.5
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: pinnedCards.length,
+            itemBuilder: (context, index) {
+              final card = pinnedCards[index];
+              return GestureDetector(
+                onTap: () => context.push('/card_detail', extra: card),
+                child: TcgCardView(model: card, isCompact: true),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => const Center(
+          child: Text('Error loading favorites', style: TextStyle(color: Colors.red)),
+        ),
       ),
     );
   }
@@ -200,25 +253,6 @@ class ProfileScreen extends ConsumerWidget {
             'Find Your Friends',
             style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(String title, String content) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-          const SizedBox(height: 8),
-          Text(content, style: GoogleFonts.inter(fontSize: 15, color: Colors.white)),
         ],
       ),
     );

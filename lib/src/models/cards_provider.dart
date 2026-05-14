@@ -21,6 +21,7 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     double? latitude,
     double? longitude,
     String? deckId,
+    List<String>? tags,
   }) async {
     final repo = ref.read(supabaseRepositoryProvider);
     await repo.submitPost(
@@ -34,6 +35,7 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
       latitude: latitude,
       longitude: longitude,
       deckId: deckId,
+      tags: tags,
     );
 
     ref.invalidateSelf();
@@ -56,6 +58,7 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     required double rating,
     required String publicComment,
     required String privateComment,
+    List<String>? tags,
   }) async {
     final repo = ref.read(supabaseRepositoryProvider);
     await repo.updatePost(
@@ -65,6 +68,7 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
       rating: rating,
       publicComment: publicComment,
       privateComment: privateComment,
+      tags: tags,
     );
     ref.invalidateSelf();
     await future;
