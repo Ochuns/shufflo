@@ -80,7 +80,8 @@ class CardDetailScreen extends ConsumerWidget {
                         bool success;
                         try {
                           success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
-                        } catch (_) {
+                        } catch (e) {
+                          debugPrint('togglePin failed: $e');
                           success = false;
                         } finally {
                           ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = false;
