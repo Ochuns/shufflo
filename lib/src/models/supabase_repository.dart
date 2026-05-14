@@ -439,10 +439,13 @@ class SupabaseRepository {
 
     try {
       if (isPinned) {
-        await _supabase.from('user_pinned_cards').insert({
-          'user_id': userId,
-          'card_id': cardId,
-        });
+        await _supabase.from('user_pinned_cards').upsert(
+          {
+            'user_id': userId,
+            'card_id': cardId,
+          },
+          onConflict: 'user_id,card_id',
+        );
       } else {
         await _supabase
             .from('user_pinned_cards')
