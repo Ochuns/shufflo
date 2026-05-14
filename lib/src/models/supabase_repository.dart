@@ -450,8 +450,10 @@ class SupabaseRepository {
             .eq('user_id', userId)
             .eq('card_id', cardId);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('togglePinCard Error: $e');
+      debugPrint('$stackTrace');
+      rethrow;
     }
   }
 }
