@@ -81,7 +81,7 @@ class CardDetailScreen extends ConsumerWidget {
                         try {
                           success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
                         } catch (e) {
-                          debugPrint('togglePin failed: $e');
+                          debugPrint('Failed to toggle pin for card ${latestModel.id}: $e');
                           success = false;
                         } finally {
                           ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = false;
@@ -105,7 +105,7 @@ class CardDetailScreen extends ConsumerWidget {
                     : (pinnedCardsAsync.isLoading
                         ? 'Loading Favorites'
                         : (pinnedCardsAsync.hasError
-                            ? 'Failed to load favorites. Please try again.'
+                            ? 'Failed to load favorites. Reload this screen to retry.'
                             : 'Pin temporarily unavailable')),
               ),
               if (isOwner) ...[
