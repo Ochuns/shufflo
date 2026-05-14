@@ -77,9 +77,8 @@ class CardDetailScreen extends ConsumerWidget {
                     ? () async {
                         final wasPinned = isPinned;
                         ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = true;
-                        bool success = false;
                         try {
-                          success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
+                          final success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
