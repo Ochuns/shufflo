@@ -435,7 +435,9 @@ class SupabaseRepository {
 
   Future<void> togglePinCard(String cardId, bool isPinned) async {
     final userId = currentUserId;
-    if (userId == null) return;
+    if (userId == null) {
+      throw StateError('User is not authenticated');
+    }
 
     try {
       if (isPinned) {
