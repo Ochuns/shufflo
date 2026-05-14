@@ -103,7 +103,9 @@ class CardDetailScreen extends ConsumerWidget {
                     ? (isPinned ? 'Unpin Card' : 'Pin Card')
                     : (pinnedCardsAsync.isLoading
                         ? 'Loading Favorites'
-                        : 'Failed to load favorites. Please try again.'),
+                        : (pinnedCardsAsync.hasError
+                            ? 'Failed to load favorites. Please try again.'
+                            : 'Pin temporarily unavailable')),
               ),
               if (isOwner) ...[
                 IconButton(
