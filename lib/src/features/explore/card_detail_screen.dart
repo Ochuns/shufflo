@@ -86,11 +86,11 @@ class CardDetailScreen extends ConsumerWidget {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(success
-                                ? ((ref.read(pinnedCardsProvider).valueOrNull?.contains(latestModel.id) ?? false)
-                                    ? 'Pinned card to Favorites'
-                                    : 'Unpinned card')
-                                : 'Failed to update Favorites'),
+                            content: Text(
+                              success
+                                  ? (isPinned ? 'Unpinned card' : 'Pinned card to Favorites')
+                                  : 'Failed to update Favorites',
+                            ),
                             duration: const Duration(seconds: 1),
                           ),
                         );
