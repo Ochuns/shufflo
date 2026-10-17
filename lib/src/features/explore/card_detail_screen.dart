@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import '../../models/supabase_repository.dart';
@@ -46,7 +47,7 @@ class CardDetailScreen extends ConsumerWidget {
 
         final pinnedCardsAsync = ref.watch(pinnedCardsProvider);
         final isPinActionInProgress = ref.watch(_pinActionInProgressProvider(latestModel.id));
-        final isPinned = pinnedCardsAsync.valueOrNull?.contains(latestModel.id) ?? false;
+        final isPinned = pinnedCardsAsync.value?.contains(latestModel.id) ?? false;
         final canTogglePin = pinnedCardsAsync.hasValue && !isPinActionInProgress;
 
         return Scaffold(
