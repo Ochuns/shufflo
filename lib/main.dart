@@ -15,15 +15,9 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  // Anonymous Login
-  final supabase = Supabase.instance.client;
-  if (supabase.auth.currentUser == null) {
-    try {
-      await supabase.auth.signInAnonymously();
-    } catch (e) {
-      debugPrint('Anonymous Login failed: $e');
-    }
-  }
+  // 認証ゲートはルーター側で行う（未ログイン→ログイン / 匿名→引き継ぎ / 未確認→確認待ち）。
+  // 旧実装の「起動時に無条件で匿名ログイン」は廃止。既存の匿名セッションは保持され、
+  // 引き継ぎ画面から同一UIDのまま正式アカウントへ移行できる（仕様7.4）。
 
   runApp(
     const ProviderScope(

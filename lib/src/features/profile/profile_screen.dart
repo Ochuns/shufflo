@@ -36,7 +36,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             IconButton(
               icon: const Icon(LucideIcons.settings, color: Colors.white),
-              onPressed: () {},
+              onPressed: () => context.push('/account'),
             ),
           ],
         ),

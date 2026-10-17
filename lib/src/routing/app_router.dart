@@ -13,6 +13,16 @@ import '../features/my_cards/deck_playback_screen.dart';
 import '../features/my_cards/create_deck_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/post/post_screen.dart';
+import '../features/auth/auth_repository.dart';
+import '../features/auth/auth_providers.dart';
+import '../features/auth/login_screen.dart';
+import '../features/auth/signup_screen.dart';
+import '../features/auth/email_confirmation_screen.dart';
+import '../features/auth/welcome_convert_screen.dart';
+import '../features/auth/account_screen.dart';
+
+/// 認証状態に応じて許可される公開ルート（未ログインでも到達可能）。
+const _publicRoutes = {'/login', '/signup', '/verify-email'};
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _mapNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'map');
@@ -22,10 +32,58 @@ final _feedNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'feed');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final goRouterProvider = Provider<GoRouter>((ref) {
+  final auth = ref.watch(authRepositoryProvider);
+  final refresh = ref.watch(routerRefreshProvider);
+
   return GoRouter(
     initialLocation: '/map',
     navigatorKey: _rootNavigatorKey,
+    refreshListenable: refresh,
+    // 認証ゲート: 状態に応じて適切な画面へ誘導する。
+    // 公開範囲やデータアクセスの最終的な強制はサーバー側(RLS)で行う。
+    redirect: (context, state) {
+      final status = auth.status;
+      final loc = state.matchedLocation;
+      switch (status) {
+        case AppAuthStatus.unauthenticated:
+          return _publicRoutes.contains(loc) ? null : '/login';
+        case AppAuthStatus.anonymous:
+          return loc == '/welcome' ? null : '/welcome';
+        case AppAuthStatus.unconfirmed:
+          return loc == '/verify-email' ? null : '/verify-email';
+        case AppAuthStatus.authenticated:
+          if (_publicRoutes.contains(loc) || loc == '/welcome') return '/map';
+          return null;
+      }
+    },
     routes: [
+      // --- 認証系（ボトムナビの外, フルスクリーン） ---
+      GoRoute(
+        path: '/login',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            EmailConfirmationScreen(email: state.extra as String?),
+      ),
+      GoRoute(
+        path: '/welcome',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const WelcomeConvertScreen(),
+      ),
+      GoRoute(
+        path: '/account',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AccountScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -86,8 +144,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra;
           if (extra is! ExperienceCardModel) {
             return const NoTransitionPage(
-              child: const Scaffold(
-                body: const Center(
+              child: Scaffold(
+                body: Center(
                   child: Text('Unable to open card details.'),
                 ),
               ),
