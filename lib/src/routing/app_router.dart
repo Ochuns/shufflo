@@ -20,6 +20,10 @@ import '../features/auth/signup_screen.dart';
 import '../features/auth/email_confirmation_screen.dart';
 import '../features/auth/welcome_convert_screen.dart';
 import '../features/auth/account_screen.dart';
+import '../features/social/user_search_screen.dart';
+import '../features/social/friends_list_screen.dart';
+import '../features/social/friend_profile_screen.dart';
+import '../features/social/notifications_screen.dart';
 
 /// 認証状態に応じて許可される公開ルート（未ログインでも到達可能）。
 const _publicRoutes = {'/login', '/signup', '/verify-email'};
@@ -83,6 +87,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/account',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const AccountScreen(),
+      ),
+      // --- 友達・通知（フルスクリーン） ---
+      GoRoute(
+        path: '/user_search',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const UserSearchScreen(),
+      ),
+      GoRoute(
+        path: '/friends',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const FriendsListScreen(),
+      ),
+      GoRoute(
+        path: '/user',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => FriendProfileScreen(userId: state.extra as String),
+      ),
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

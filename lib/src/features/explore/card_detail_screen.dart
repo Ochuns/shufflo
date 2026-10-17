@@ -5,11 +5,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import '../../models/supabase_repository.dart';
-import '../../models/deck_model.dart';
 import '../../models/decks_provider.dart';
 import '../../models/pinned_cards_provider.dart';
 import '../../common_widgets/tcg_card_view.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../social/like_action.dart';
 
 class _PinActionInProgressNotifier extends Notifier<Set<String>> {
   @override
@@ -79,6 +78,11 @@ class CardDetailScreen extends ConsumerWidget {
                   onPressed: () => context.push('/deck_playback', extra: parentDeck),
                   tooltip: 'View in Deck',
                 ),
+              LikeAction(
+                postId: latestModel.postId,
+                authorId: latestModel.authorId ?? '',
+                isOwner: isOwner,
+              ),
               IconButton(
                 icon: isPinActionInProgress || pinnedCardsAsync.isLoading
                     ? const SizedBox(

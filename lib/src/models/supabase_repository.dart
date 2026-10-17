@@ -199,6 +199,66 @@ class SupabaseRepository {
     );
   }
 
+  // Private カード行を ExperienceCardModel にマッピングするヘルパー
+  // (posts!inner で title/category/rating を取得する select 前提)
+  ExperienceCardModel _mapPrivateCardRow(Map<String, dynamic> row, String imagesDirPath) {
+    final postData = row['posts'];
+    return ExperienceCardModel(
+      id: row['id'],
+      postId: row['post_id'],
+      authorId: row['user_id'],
+      title: postData?['title'] ?? 'Untitled',
+      imageUrl: row['image_url'] ?? '',
+      rating: (postData?['rating'] ?? 3).toDouble(),
+      category: ExperienceCategory.values.firstWhere((e) => e.name == postData?['category'], orElse: () => ExperienceCategory.other),
+      comment: row['comment'] ?? '',
+      authorName: row['users'] != null ? row['users']['username'] : 'Explorer',
+      authorAvatarUrl: row['users'] != null ? row['users']['avatar_url'] : 'https://i.pravatar.cc/300',
+      isPublic: false,
+      localImagePath: row['local_image_path'] != null ? '$imagesDirPath/${row['local_image_path']}' : null,
+      rarity: CardRarity.values.firstWhere((e) => e.name == (row['rarity'] ?? 'common'), orElse: () => CardRarity.common),
+      createdAt: row['visited_date'] != null ? DateTime.parse(row['visited_date']).toLocal() : null,
+      latitude: row['locations'] != null ? (row['locations']['latitude'] as num?)?.toDouble() : null,
+      longitude: row['locations'] != null ? (row['locations']['longitude'] as num?)?.toDouble() : null,
+      tags: (row['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+    );
+  }
+
+  // 指定ユーザーのタイムライン (Public + Private を新しい順で統合)。
+  // Private の閲覧可否はサーバー側 RLS が判定する (本人 または 承認済み友達のみ可)。
+  Future<List<ExperienceCardModel>> fetchTimelineCards(String userId, {int limit = 20, int offset = 0}) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final imagesDirPath = '${directory.path}/stored-images';
+    final List<ExperienceCardModel> cards = [];
+
+    final pubRes = await _supabase.from('public_cards')
+        .select('*, users(username, avatar_url), locations(latitude, longitude)')
+        .eq('user_id', userId)
+        .filter('deleted_at', 'is', null)
+        .order('created_at', ascending: false)
+        .range(offset, offset + limit - 1);
+    for (final row in pubRes) {
+      cards.add(_mapPublicCardRow(row, imagesDirPath));
+    }
+
+    final privRes = await _supabase.from('private_cards')
+        .select('*, posts!inner(title, category, rating), users(username, avatar_url), locations(latitude, longitude)')
+        .eq('user_id', userId)
+        .filter('deleted_at', 'is', null)
+        .order('visited_date', ascending: false)
+        .range(offset, offset + limit - 1);
+    for (final row in privRes) {
+      cards.add(_mapPrivateCardRow(row, imagesDirPath));
+    }
+
+    cards.sort((a, b) {
+      final da = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final db = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return db.compareTo(da);
+    });
+    return cards.take(limit).toList();
+  }
+
   // 4. Public/Privateカードの一括取得
   Future<List<ExperienceCardModel>> fetchAllCards() async {
     final List<ExperienceCardModel> cards = [];

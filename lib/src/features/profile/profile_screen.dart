@@ -5,7 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../models/cards_provider.dart';
 import '../../models/pinned_cards_provider.dart';
+import '../../models/supabase_repository.dart';
+import '../../models/social_models.dart';
+import '../../models/social_providers.dart';
+import '../../models/social_repository.dart';
 import '../../common_widgets/tcg_card_view.dart';
+import '../social/timeline_list.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -21,6 +26,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final cardsAsync = ref.watch(cardsProvider);
+    final myId = ref.watch(supabaseRepositoryProvider).currentUserId;
+    final myProfile = ref.watch(myProfileProvider).value;
+    final friendsCount = ref.watch(friendsProvider).value?.length;
 
     return DefaultTabController(
       length: 2,
@@ -34,6 +42,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           backgroundColor: Colors.black,
           elevation: 0,
           actions: [
+            IconButton(
+              icon: const Icon(LucideIcons.search, color: Colors.white),
+              tooltip: 'ユーザーを探す',
+              onPressed: () => context.push('/user_search'),
+            ),
+            Consumer(builder: (context, ref, _) {
+              final unread = ref.watch(unreadCountProvider).value ?? 0;
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: unread > 0,
+                  label: Text('$unread'),
+                  child: const Icon(LucideIcons.bell, color: Colors.white),
+                ),
+                tooltip: '通知',
+                onPressed: () => context.push('/notifications'),
+              );
+            }),
             IconButton(
               icon: const Icon(LucideIcons.settings, color: Colors.white),
               onPressed: () => context.push('/account'),
@@ -52,9 +77,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 35,
-                        backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/300'),
+                        backgroundImage: CachedNetworkImageProvider(
+                          myProfile?.displayAvatar ?? 'https://i.pravatar.cc/300',
+                        ),
                       ),
                       const SizedBox(width: 20),
                       Expanded(
@@ -62,23 +89,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Creative Editor',
+                              myProfile?.username ?? '...',
                               style: GoogleFonts.outfit(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '@experience_crafter',
-                              style: GoogleFonts.inter(
-                                color: Colors.grey.shade500,
-                                fontSize: 14,
+                            if (myProfile?.bio != null && myProfile!.bio!.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                myProfile.bio!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
+                      ),
+                      IconButton(
+                        onPressed: () => _showEditProfileSheet(context, myProfile),
+                        icon: const Icon(LucideIcons.pencil, color: Colors.white, size: 20),
+                        tooltip: 'プロフィール編集',
                       ),
                       IconButton(
                         onPressed: () {
@@ -104,9 +140,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _buildStatItem(cards.length.toString(), 'Cards'),
-                              _buildStatItem('3', 'Decks'),
-                              _buildStatItem('12', 'Friends'),
+                              _buildStatItem('${myProfile?.postCount ?? 0}', '投稿'),
+                              GestureDetector(
+                                onTap: () => context.push('/friends'),
+                                child: _buildStatItem('${friendsCount ?? 0}', '友達'),
+                              ),
                             ],
                           ),
                         )
@@ -122,8 +160,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     indicatorWeight: 2,
                     labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
                     tabs: const [
-                      Tab(icon: Icon(LucideIcons.heart, size: 20), text: 'Favorites'),
-                      Tab(icon: Icon(LucideIcons.users, size: 20), text: 'Friends'),
+                      Tab(icon: Icon(Icons.dynamic_feed, size: 20), text: 'タイムライン'),
+                      Tab(icon: Icon(LucideIcons.heart, size: 20), text: 'お気に入り'),
                     ],
                   ),
                 ),
@@ -131,8 +169,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
+                      myId == null
+                          ? const SizedBox.shrink()
+                          : TimelineList(userId: myId),
                       _buildFavoritesTab(),
-                      _buildFriendSearchTab(),
                     ],
                   ),
                 ),
@@ -223,38 +263,81 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildFriendSearchTab() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          TextField(
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Search friends by ID...',
-              hintStyle: TextStyle(color: Colors.grey.shade600),
-              prefixIcon: Icon(LucideIcons.search, size: 20, color: Colors.grey.shade600),
-              filled: true,
-              fillColor: const Color(0xFF141414),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+  Future<void> _showEditProfileSheet(BuildContext context, UserProfile? profile) async {
+    final usernameCtrl = TextEditingController(text: profile?.username ?? '');
+    final bioCtrl = TextEditingController(text: profile?.bio ?? '');
+    final avatarCtrl = TextEditingController(text: profile?.avatarUrl ?? '');
+    bool saving = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF121212),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (c, setSheet) {
+            Future<void> save() async {
+              setSheet(() => saving = true);
+              try {
+                await ref.read(socialRepositoryProvider).updateMyProfile(
+                      username: usernameCtrl.text,
+                      bio: bioCtrl.text,
+                      avatarUrl: avatarCtrl.text,
+                    );
+                ref.invalidate(myProfileProvider);
+                if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+              } catch (_) {
+                setSheet(() => saving = false);
+                if (sheetCtx.mounted) {
+                  ScaffoldMessenger.of(sheetCtx).showSnackBar(const SnackBar(
+                      content: Text('保存に失敗しました（ユーザー名の重複などをご確認ください）')));
+                }
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20, right: 20, top: 20,
+                bottom: MediaQuery.of(c).viewInsets.bottom + 20,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('プロフィール編集',
+                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 16),
+                  TextField(
+                      controller: usernameCtrl,
+                      decoration: const InputDecoration(labelText: 'ユーザー名')),
+                  const SizedBox(height: 12),
+                  TextField(
+                      controller: bioCtrl,
+                      maxLength: 140,
+                      maxLines: 3,
+                      decoration: const InputDecoration(labelText: '自己紹介（140字以内）')),
+                  const SizedBox(height: 12),
+                  TextField(
+                      controller: avatarCtrl,
+                      decoration: const InputDecoration(labelText: 'アバター画像URL')),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: saving ? null : save,
+                    child: saving
+                        ? const SizedBox(
+                            height: 20, width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('保存'),
+                  ),
+                ],
               ),
-            ),
-          ),
-          const SizedBox(height: 40),
-          Icon(LucideIcons.userPlus, size: 48, color: Colors.grey.shade800),
-          const SizedBox(height: 16),
-          Text(
-            'Find Your Friends',
-            style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
+    usernameCtrl.dispose();
+    bioCtrl.dispose();
+    avatarCtrl.dispose();
   }
 }
