@@ -19,6 +19,7 @@ import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/auth/email_confirmation_screen.dart';
 import '../features/auth/welcome_convert_screen.dart';
+import '../features/auth/account_screen.dart';
 
 /// 認証状態に応じて許可される公開ルート（未ログインでも到達可能）。
 const _publicRoutes = {'/login', '/signup', '/verify-email'};
@@ -77,6 +78,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/welcome',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const WelcomeConvertScreen(),
+      ),
+      GoRoute(
+        path: '/account',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AccountScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -138,8 +144,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra;
           if (extra is! ExperienceCardModel) {
             return const NoTransitionPage(
-              child: const Scaffold(
-                body: const Center(
+              child: Scaffold(
+                body: Center(
                   child: Text('Unable to open card details.'),
                 ),
               ),
