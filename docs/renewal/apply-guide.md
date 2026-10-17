@@ -1,14 +1,19 @@
 # リニューアルDB 適用手順書
 
 対象マイグレーション（`supabase/migrations/` 配下、依存順）:
-1. `20261017_01_profiles.sql`
-2. `20261017_02_friends.sql`
-3. `20261017_03_likes_notifications.sql`
-4. `20261017_04_private_card_friend_access.sql`
-5. `20261017_05_stores_themes.sql`
-6. `20261017_06_visits_progress.sql`
-7. `20261017_07_coupons.sql`
-8. `20261017_08_posts_privacy_hardening.sql`
+1. `20261017010000_profiles.sql`
+2. `20261017020000_friends.sql`
+3. `20261017030000_likes_notifications.sql`
+4. `20261017040000_private_card_friend_access.sql`
+5. `20261017050000_stores_themes.sql`
+6. `20261017060000_visits_progress.sql`
+7. `20261017070000_coupons.sql`
+8. `20261017080000_posts_privacy_hardening.sql`
+9. `20261017090000_auth_profile_bootstrap.sql`（認証: username可用性RPC・プロフィール自動生成トリガー）
+10. `20261017100000_account_deletion_cascade.sql`（退会: カスケード整備）
+
+> 注: ファイルのバージョンは一意な14桁タイムスタンプ。`supabase db push` で番号順に適用される。
+> SQLエディタで手動適用する場合もこの順で実行すること。
 
 すべて冪等（`IF NOT EXISTS` / `DROP POLICY IF EXISTS` / `CREATE OR REPLACE`）で、PostGIS 15 のローカル環境で適用・再適用・挙動検証済み。
 
