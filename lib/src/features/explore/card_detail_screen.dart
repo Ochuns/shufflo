@@ -9,8 +9,24 @@ import '../../models/deck_model.dart';
 import '../../models/decks_provider.dart';
 import '../../models/pinned_cards_provider.dart';
 import '../../common_widgets/tcg_card_view.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final _pinActionInProgressProvider = StateProvider.family<bool, String>((ref, _) => false);
+class _PinActionInProgressNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => {};
+
+  void setInProgress(String id, bool inProgress) {
+    if (inProgress) {
+      state = {...state, id};
+    } else {
+      state = {...state}..remove(id);
+    }
+  }
+}
+
+final _pinActionInProgressProvider = NotifierProvider<_PinActionInProgressNotifier, Set<String>>(
+  _PinActionInProgressNotifier.new,
+);
 
 class CardDetailScreen extends ConsumerWidget {
   final ExperienceCardModel model;
@@ -45,8 +61,9 @@ class CardDetailScreen extends ConsumerWidget {
         ).firstOrNull;
 
         final pinnedCardsAsync = ref.watch(pinnedCardsProvider);
-        final isPinActionInProgress = ref.watch(_pinActionInProgressProvider(latestModel.id));
-        final isPinned = pinnedCardsAsync.valueOrNull?.contains(latestModel.id) ?? false;
+        final inProgressSet = ref.watch(_pinActionInProgressProvider);
+        final isPinActionInProgress = inProgressSet.contains(latestModel.id);
+        final isPinned = pinnedCardsAsync.value?.contains(latestModel.id) ?? false;
         final canTogglePin = pinnedCardsAsync.hasValue && !isPinActionInProgress;
 
         return Scaffold(
@@ -76,7 +93,7 @@ class CardDetailScreen extends ConsumerWidget {
                 onPressed: canTogglePin
                     ? () async {
                         final wasPinned = isPinned;
-                        ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = true;
+                        ref.read(_pinActionInProgressProvider.notifier).setInProgress(latestModel.id, true);
                         try {
                           final success = await ref.read(pinnedCardsProvider.notifier).togglePin(latestModel.id);
                           if (!context.mounted) return;
@@ -91,7 +108,7 @@ class CardDetailScreen extends ConsumerWidget {
                             ),
                           );
                         } finally {
-                          ref.read(_pinActionInProgressProvider(latestModel.id).notifier).state = false;
+                          ref.read(_pinActionInProgressProvider.notifier).setInProgress(latestModel.id, false);
                         }
                       }
                     : null,
