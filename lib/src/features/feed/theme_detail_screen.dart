@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
@@ -76,7 +77,7 @@ class _BodyState extends ConsumerState<_Body> {
                 child: LinearProgressIndicator(
                   value: s.progress,
                   minHeight: 10,
-                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  backgroundColor: AizuColors.border,
                   valueColor: AlwaysStoppedAnimation(
                       s.isComplete ? Colors.amber : Colors.pinkAccent),
                 ),
@@ -107,7 +108,7 @@ class _BodyState extends ConsumerState<_Body> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF141414),
+              color: AizuColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
             ),
@@ -123,7 +124,7 @@ class _BodyState extends ConsumerState<_Body> {
                           style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.amber)),
                       if (s.rewardDescription != null && s.rewardDescription!.isNotEmpty)
                         Text(s.rewardDescription!,
-                            style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                            style: TextStyle(color: AizuColors.textSecondary, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -156,12 +157,12 @@ class _SlotTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tile = Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF141414),
+        color: AizuColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: slot.visited
               ? Colors.pinkAccent.withValues(alpha: 0.4)
-              : Colors.white.withValues(alpha: 0.08),
+              : AizuColors.border,
         ),
       ),
       child: Column(
@@ -180,7 +181,7 @@ class _SlotTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: slot.visited ? Colors.white : Colors.grey.shade500,
+                color: slot.visited ? Colors.white : AizuColors.textSecondary,
                 fontSize: 13,
                 fontWeight: slot.visited ? FontWeight.w600 : FontWeight.w400,
               ),
@@ -212,21 +213,21 @@ class _SlotTile extends StatelessWidget {
         imageUrl: slot.cardImageUrl!,
         fit: BoxFit.cover,
         width: double.infinity,
-        placeholder: (_, _) => Container(color: const Color(0xFF1E1E1E)),
+        placeholder: (_, _) => Container(color: AizuColors.surfaceAlt),
         errorWidget: (_, _, _) => _placeholder(),
       );
     }
     return Container(
-      color: const Color(0xFF1E1E1E),
+      color: AizuColors.surfaceAlt,
       child: const Center(child: Icon(Icons.check_circle, color: Colors.pinkAccent)),
     );
   }
 
   Widget _placeholder() {
     return Container(
-      color: const Color(0xFF1A1A1A),
+      color: AizuColors.surfaceAlt,
       child: Center(
-        child: Icon(Icons.location_on_outlined, color: Colors.grey.shade700, size: 32),
+        child: Icon(Icons.location_on_outlined, color: AizuColors.textSecondary, size: 32),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -24,7 +25,7 @@ class FeedScreen extends ConsumerWidget {
               child: Text(
                 '会津めぐり',
                 style: GoogleFonts.outfit(
-                    fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white),
+                    fontSize: 28, fontWeight: FontWeight.w800, color: AizuColors.textPrimary),
               ),
             ),
             Expanded(
@@ -68,9 +69,9 @@ class _ThemeTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF141414),
+          color: AizuColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(color: AizuColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +82,7 @@ class _ThemeTile extends StatelessWidget {
                   child: Text(
                     theme.name,
                     style: GoogleFonts.outfit(
-                        fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white),
+                        fontSize: 17, fontWeight: FontWeight.w700, color: AizuColors.textPrimary),
                   ),
                 ),
                 if (theme.isComplete)
@@ -97,7 +98,7 @@ class _ThemeTile extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: theme.progress,
                 minHeight: 8,
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                backgroundColor: AizuColors.border,
                 valueColor: AlwaysStoppedAnimation(
                     theme.isComplete ? Colors.amber : Colors.pinkAccent),
               ),
@@ -107,7 +108,7 @@ class _ThemeTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('${theme.collectedCount} / ${theme.targetCount}',
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                    style: TextStyle(color: AizuColors.textSecondary, fontSize: 13)),
                 if (theme.rewardTitle != null && theme.rewardTitle!.isNotEmpty)
                   Row(
                     children: [

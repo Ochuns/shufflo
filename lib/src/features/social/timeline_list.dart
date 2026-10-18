@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
@@ -51,9 +52,9 @@ class _TimelineTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF141414),
+          color: AizuColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(color: AizuColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +89,7 @@ class _TimelineTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+                            color: AizuColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -103,7 +104,7 @@ class _TimelineTile extends StatelessWidget {
                       card.comment,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                      style: TextStyle(color: AizuColors.textSecondary, fontSize: 13),
                     ),
                   ],
                 ],
@@ -130,12 +131,12 @@ class _CardImage extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: card.imageUrl,
         fit: BoxFit.cover,
-        placeholder: (_, _) => Container(color: const Color(0xFF1E1E1E)),
+        placeholder: (_, _) => Container(color: AizuColors.surfaceAlt),
         errorWidget: (_, _, _) =>
-            Container(color: const Color(0xFF1E1E1E), child: const Icon(Icons.image_not_supported, color: Colors.grey)),
+            Container(color: AizuColors.surfaceAlt, child: const Icon(Icons.image_not_supported, color: Colors.grey)),
       );
     }
-    return Container(color: const Color(0xFF1E1E1E));
+    return Container(color: AizuColors.surfaceAlt);
   }
 }
 
@@ -154,11 +155,11 @@ class _VisibilityBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(isPublic ? Icons.public : Icons.lock_outline, size: 12, color: Colors.white),
+          Icon(isPublic ? Icons.public : Icons.lock_outline, size: 12, color: AizuColors.textPrimary),
           const SizedBox(width: 4),
           Text(
             isPublic ? 'Public' : 'Private',
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+            style: const TextStyle(color: AizuColors.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
           ),
         ],
       ),

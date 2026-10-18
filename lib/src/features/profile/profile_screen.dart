@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,22 +34,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AizuColors.kinari,
         appBar: AppBar(
           title: Text(
             'Shufflo',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white),
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AizuColors.textPrimary),
           ),
-          backgroundColor: Colors.black,
+          backgroundColor: AizuColors.kinari,
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(LucideIcons.ticket, color: Colors.white),
+              icon: const Icon(LucideIcons.ticket, color: AizuColors.textPrimary),
               tooltip: 'クーポン',
               onPressed: () => context.push('/coupons'),
             ),
             IconButton(
-              icon: const Icon(LucideIcons.search, color: Colors.white),
+              icon: const Icon(LucideIcons.search, color: AizuColors.textPrimary),
               tooltip: 'ユーザーを探す',
               onPressed: () => context.push('/user_search'),
             ),
@@ -58,14 +59,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Badge(
                   isLabelVisible: unread > 0,
                   label: Text('$unread'),
-                  child: const Icon(LucideIcons.bell, color: Colors.white),
+                  child: const Icon(LucideIcons.bell, color: AizuColors.textPrimary),
                 ),
                 tooltip: '通知',
                 onPressed: () => context.push('/notifications'),
               );
             }),
             IconButton(
-              icon: const Icon(LucideIcons.settings, color: Colors.white),
+              icon: const Icon(LucideIcons.settings, color: AizuColors.textPrimary),
               onPressed: () => context.push('/account'),
             ),
           ],
@@ -78,7 +79,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 // Profile Header
                 Container(
-                  color: Colors.black,
+                  color: AizuColors.kinari,
                   padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                   child: Row(
                     children: [
@@ -98,7 +99,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               style: GoogleFonts.outfit(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AizuColors.textPrimary,
                               ),
                             ),
                             if (myProfile?.bio != null && myProfile!.bio!.isNotEmpty) ...[
@@ -108,7 +109,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  color: Colors.grey.shade500,
+                                  color: AizuColors.textSecondary,
                                   fontSize: 13,
                                 ),
                               ),
@@ -118,7 +119,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       IconButton(
                         onPressed: () => _showEditProfileSheet(context, myProfile),
-                        icon: const Icon(LucideIcons.pencil, color: Colors.white, size: 20),
+                        icon: const Icon(LucideIcons.pencil, color: AizuColors.textPrimary, size: 20),
                         tooltip: 'プロフィール編集',
                       ),
                       IconButton(
@@ -129,7 +130,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                         icon: Icon(
                           _showStats ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-                          color: Colors.white,
+                          color: AizuColors.textPrimary,
                         ),
                       ),
                     ],
@@ -157,10 +158,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 // Tab Bar
                 Container(
-                  color: Colors.black,
+                  color: AizuColors.kinari,
                   child: TabBar(
                     labelColor: Colors.white,
-                    unselectedLabelColor: Colors.grey.shade700,
+                    unselectedLabelColor: AizuColors.textSecondary,
                     indicatorColor: Colors.white,
                     indicatorWeight: 2,
                     labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
@@ -197,12 +198,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           style: GoogleFonts.outfit(
             fontSize: 20, 
             fontWeight: FontWeight.w700, 
-            color: Colors.white,
+            color: AizuColors.textPrimary,
           ),
         ),
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500),
+          style: GoogleFonts.inter(fontSize: 12, color: AizuColors.textSecondary),
         ),
       ],
     );
@@ -226,16 +227,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.tag, size: 48, color: Colors.grey.shade800),
+                  Icon(LucideIcons.tag, size: 48, color: AizuColors.textSecondary),
                   const SizedBox(height: 16),
                   Text(
                     'No Pinned Cards Yet',
-                    style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.outfit(fontSize: 18, color: AizuColors.textSecondary, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Pin cards from their detail screen to show them here.',
-                    style: GoogleFonts.inter(color: Colors.grey.shade700),
+                    style: GoogleFonts.inter(color: AizuColors.textSecondary),
                   ),
                 ],
               ),
@@ -277,7 +278,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: AizuColors.kinari,
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (c, setSheet) {

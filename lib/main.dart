@@ -35,7 +35,7 @@ class ShuffloApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Shufflo',
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme, // 会津らしさ × モダン（ライト固定）
       routerConfig: goRouter,
       debugShowCheckedModeBanner: false,
     );

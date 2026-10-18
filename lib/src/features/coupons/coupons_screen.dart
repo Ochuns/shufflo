@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -94,12 +95,12 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
       opacity: dim ? 0.55 : 1,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF141414),
+          color: AizuColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: status == CouponStatus.active
                 ? Colors.amber.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.08),
+                : AizuColors.border,
           ),
         ),
         child: Column(
@@ -120,7 +121,7 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
                               child: Text(
                                 c.rewardTitle ?? '特典',
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
+                                    fontWeight: FontWeight.w700, fontSize: 16, color: AizuColors.textPrimary),
                               ),
                             ),
                             _StatusBadge(status: status),
@@ -129,11 +130,11 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
                         if (c.rewardDescription != null && c.rewardDescription!.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(c.rewardDescription!,
-                              style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                              style: TextStyle(color: AizuColors.textSecondary, fontSize: 13)),
                         ],
                         const SizedBox(height: 8),
                         Text('有効期限: ${df.format(c.expiresAt)}',
-                            style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                            style: TextStyle(color: AizuColors.textSecondary, fontSize: 12)),
                       ],
                     ),
                   ),

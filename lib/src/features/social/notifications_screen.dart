@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
@@ -95,7 +96,7 @@ class _NotificationTile extends ConsumerWidget {
                 radius: 9,
                 backgroundColor: isLike ? Colors.pinkAccent : Colors.blueAccent,
                 child: Icon(isLike ? Icons.favorite : Icons.person_add_alt_1,
-                    size: 11, color: Colors.white),
+                    size: 11, color: AizuColors.textPrimary),
               ),
             ),
           ],

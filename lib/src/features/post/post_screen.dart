@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -178,13 +179,13 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     final decksAsync = ref.watch(decksProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: AizuColors.kinari,
       appBar: AppBar(
-        title: const Text('Design Card', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
+        title: const Text('カードをつくる', style: TextStyle(fontWeight: FontWeight.w700, color: AizuColors.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AizuColors.textPrimary),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -259,7 +260,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                       child: Text(
                         _isFront ? 'Editing: PUBLIC SIDE' : 'Editing: PRIVATE SIDE',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AizuColors.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 2.0,
@@ -291,18 +292,18 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
               // UI Element for picking category (Restored)
               DropdownButtonFormField<ExperienceCategory>(
-                dropdownColor: const Color(0xFF2A2A2A),
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: AizuColors.surfaceAlt,
+                style: const TextStyle(color: AizuColors.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'カテゴリ',
                   labelStyle: const TextStyle(color: Colors.white70),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.3)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.1)),
                   ),
                 ),
                 value: _selectedCategory,
@@ -342,18 +343,18 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                 data: (decks) {
                   if (decks.isEmpty) return const SizedBox.shrink();
                   return DropdownButtonFormField<String>(
-                    dropdownColor: const Color(0xFF2A2A2A),
-                    style: const TextStyle(color: Colors.white),
+                    dropdownColor: AizuColors.surfaceAlt,
+                    style: const TextStyle(color: AizuColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Add to Deck (Optional)',
                       labelStyle: const TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                        borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.3)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                        borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.1)),
                       ),
                     ),
                     value: _selectedDeckId,
@@ -371,7 +372,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
               const SizedBox(height: 32),
               
               _isLoading 
-                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  ? const Center(child: CircularProgressIndicator(color: AizuColors.textPrimary))
                   : ElevatedButton(
                       onPressed: _submitCard,
                       style: ElevatedButton.styleFrom(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -112,10 +113,10 @@ class _HeaderState extends ConsumerState<_Header> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
           if (p.bio != null && p.bio!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(p.bio!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade400)),
+            Text(p.bio!, textAlign: TextAlign.center, style: TextStyle(color: AizuColors.textSecondary)),
           ],
           const SizedBox(height: 8),
-          Text('投稿 ${p.postCount}', style: TextStyle(color: Colors.grey.shade500)),
+          Text('投稿 ${p.postCount}', style: TextStyle(color: AizuColors.textSecondary)),
           const SizedBox(height: 16),
           if (_working)
             const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()))
