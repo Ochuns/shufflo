@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,16 +49,16 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AizuColors.kinari,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AizuColors.kinari,
         leading: IconButton(
-          icon: const Icon(LucideIcons.x, color: Colors.white),
+          icon: const Icon(LucideIcons.x, color: AizuColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Create New Deck',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AizuColors.textPrimary),
         ),
         actions: [
           TextButton(
@@ -65,7 +66,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
             child: _isSubmitting 
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
               : Text(
-                  'Create',
+                  '作成',
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).colorScheme.primary,
@@ -84,22 +85,22 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade400,
+                color: AizuColors.textSecondary,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _titleController,
               autofocus: true,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: AizuColors.textPrimary, fontSize: 18),
               decoration: InputDecoration(
                 hintText: 'e.g., Tokyo Trip 2026',
-                hintStyle: TextStyle(color: Colors.grey.shade700),
+                hintStyle: TextStyle(color: AizuColors.textSecondary),
                 filled: true,
-                fillColor: const Color(0xFF141414),
+                fillColor: AizuColors.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(color: AizuColors.border),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               ),
@@ -110,7 +111,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
               'This will be the base for your new collection of experiences.',
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: AizuColors.textSecondary,
               ),
             ),
           ],

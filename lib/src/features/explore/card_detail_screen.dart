@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -66,17 +67,17 @@ class CardDetailScreen extends ConsumerWidget {
         final canTogglePin = pinnedCardsAsync.hasValue && !isPinActionInProgress;
 
         return Scaffold(
-          backgroundColor: const Color(0xFF121212), 
+          backgroundColor: AizuColors.kinari, 
           appBar: showAppBar ? AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.white),
+            iconTheme: const IconThemeData(color: AizuColors.textPrimary),
             actions: [
               if (parentDeck != null && !latestModel.isPublic)
                 IconButton(
                   icon: const Icon(Icons.layers_outlined),
                   onPressed: () => context.push('/deck_playback', extra: parentDeck),
-                  tooltip: 'View in Deck',
+                  tooltip: 'デッキで見る',
                 ),
               LikeAction(
                 postId: latestModel.postId,
@@ -128,12 +129,12 @@ class CardDetailScreen extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   onPressed: () => _showEditSheet(context, ref, latestModel),
-                  tooltip: 'Edit Card',
+                  tooltip: '編集',
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () => _showDeleteDialog(context, ref, latestModel),
-                  tooltip: 'Delete Card',
+                  tooltip: '削除',
                 ),
                 const SizedBox(width: 8),
               ],
@@ -160,7 +161,7 @@ class CardDetailScreen extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, st) => Scaffold(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: AizuColors.kinari,
         body: Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
       ),
     );
@@ -172,8 +173,8 @@ class CardDetailScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('Delete Card?', style: TextStyle(color: Colors.white)),
+        backgroundColor: AizuColors.surfaceAlt,
+        title: const Text('このカードを削除する？', style: TextStyle(color: AizuColors.textPrimary)),
         content: Text(
           canDelete
               ? 'This card and its public posts will be moved to your history and not be visible to others. It will also be removed from any decks it belongs to.'
@@ -183,7 +184,7 @@ class CardDetailScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: const Text('キャンセル'),
           ),
           TextButton(
             onPressed: canDelete
@@ -212,7 +213,7 @@ class CardDetailScreen extends ConsumerWidget {
                   }
                 : null,
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-            child: const Text('Delete'),
+            child: const Text('削除'),
           ),
         ],
       ),
@@ -226,7 +227,7 @@ class CardDetailScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AizuColors.surfaceAlt,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -239,18 +240,18 @@ class CardDetailScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Edit Card', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('Edit Card', style: TextStyle(color: AizuColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             TextField(
               controller: titleController,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: const TextStyle(color: AizuColors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
-                labelText: 'Title',
+                labelText: 'タイトル',
                 labelStyle: const TextStyle(color: Colors.white70),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -263,16 +264,16 @@ class CardDetailScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             TextField(
               controller: publicCommentController,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
+              style: const TextStyle(color: AizuColors.textPrimary, fontSize: 15),
               maxLines: 4,
               decoration: InputDecoration(
-                labelText: 'Post Detail',
+                labelText: '詳細',
                 labelStyle: const TextStyle(color: Colors.white70),
                 alignLabelWithHint: true,
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(

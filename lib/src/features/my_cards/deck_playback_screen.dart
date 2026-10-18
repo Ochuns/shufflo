@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -49,7 +50,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("This deck is empty.", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text("This deck is empty.", style: TextStyle(color: AizuColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 12),
               Text("Create a new card from the camera button\nand select this deck to add it.", 
                 textAlign: TextAlign.center,
@@ -61,7 +62,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AizuColors.kinari,
       body: Stack(
         children: [
           // 1. PageView for swiping through cards
@@ -119,7 +120,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                     child: IconButton(
                       icon: const Icon(
                         Icons.arrow_back, 
-                        color: Colors.white, 
+                        color: AizuColors.textPrimary, 
                         size: 28,
                         shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
                       ),
@@ -133,7 +134,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                   Text(
                     latestDeck.title,
                     style: const TextStyle(
-                      color: Colors.white, 
+                      color: AizuColors.textPrimary, 
                       fontWeight: FontWeight.bold, 
                       letterSpacing: 1.2,
                       fontSize: 18,
@@ -152,7 +153,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                         IconButton(
                           icon: const Icon(
                             Icons.edit_outlined, 
-                            color: Colors.white, 
+                            color: AizuColors.textPrimary, 
                             size: 24,
                             shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
                           ),
@@ -163,7 +164,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                         IconButton(
                           icon: const Icon(
                             Icons.delete_outline, 
-                            color: Colors.white, 
+                            color: AizuColors.textPrimary, 
                             size: 24,
                             shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
                           ),
@@ -187,8 +188,8 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('Delete Deck?', style: TextStyle(color: Colors.white)),
+        backgroundColor: AizuColors.surfaceAlt,
+        title: const Text('このデッキを削除する？', style: TextStyle(color: AizuColors.textPrimary)),
         content: const Text(
           'Are you sure you want to delete this deck? This action cannot be undone.',
           style: TextStyle(color: Colors.white70),
@@ -196,7 +197,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: const Text('キャンセル'),
           ),
           TextButton(
             onPressed: () async {
@@ -210,7 +211,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-            child: const Text('Delete'),
+            child: const Text('削除'),
           ),
         ],
       ),
@@ -223,7 +224,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AizuColors.surfaceAlt,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -236,19 +237,19 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Edit Deck Title', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('Edit Deck Title', style: TextStyle(color: AizuColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             TextField(
               controller: titleController,
               autofocus: true,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: const TextStyle(color: AizuColors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
-                labelText: 'Title',
+                labelText: 'タイトル',
                 labelStyle: const TextStyle(color: Colors.white70),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(

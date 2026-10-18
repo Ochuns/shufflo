@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/aizu_colors.dart';
 
 class ScaffoldWithNavBar extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -17,9 +18,9 @@ class ScaffoldWithNavBar extends StatelessWidget {
       body: navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.black,
+          color: AizuColors.surface,
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+            top: BorderSide(color: AizuColors.border, width: 0.5),
           ),
         ),
         child: SafeArea(
@@ -31,13 +32,13 @@ class ScaffoldWithNavBar extends StatelessWidget {
               children: [
                 _NavBarItem(
                   icon: LucideIcons.map,
-                  label: 'Map',
+                  label: 'マップ',
                   isSelected: navigationShell.currentIndex == 0,
                   onTap: () => navigationShell.goBranch(0),
                 ),
                 _NavBarItem(
                   icon: LucideIcons.layers,
-                  label: 'Collection',
+                  label: 'コレクション',
                   isSelected: navigationShell.currentIndex == 1,
                   onTap: () => navigationShell.goBranch(1),
                 ),
@@ -46,14 +47,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
                   isSelected: navigationShell.currentIndex == 2,
                 ),
                 _NavBarItem(
-                  icon: LucideIcons.gamepad2,
-                  label: 'Feed',
+                  icon: LucideIcons.layoutGrid,
+                  label: '会津めぐり',
                   isSelected: navigationShell.currentIndex == 3,
                   onTap: () => navigationShell.goBranch(3),
                 ),
                 _NavBarItem(
                   icon: LucideIcons.user,
-                  label: 'Profile',
+                  label: 'プロフィール',
                   isSelected: navigationShell.currentIndex == 4,
                   onTap: () => navigationShell.goBranch(4),
                 ),
@@ -81,7 +82,7 @@ class _NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? Colors.white : Colors.grey.shade700;
+    final color = isSelected ? AizuColors.akabeko : AizuColors.textSecondary;
     
     return GestureDetector(
       onTap: onTap,
@@ -129,23 +130,23 @@ class _PostButton extends StatelessWidget {
         width: 54,
         height: 54,
         decoration: BoxDecoration(
-          color: Colors.black,
+          color: AizuColors.akabeko,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.3),
+            color: isSelected ? AizuColors.akabekoDark : AizuColors.akabeko,
             width: 1.5,
           ),
           boxShadow: [
-            if (isSelected) 
+            if (isSelected)
               BoxShadow(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: AizuColors.akabeko.withValues(alpha: 0.3),
                 blurRadius: 10,
               ),
           ],
         ),
         child: const Icon(
           LucideIcons.plus,
-          color: Colors.white,
+          color: AizuColors.textOnDark,
           size: 28,
         ),
       ),

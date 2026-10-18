@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -135,7 +136,7 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
                   width: 240,
                   height: 240,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 3),
+                    border: Border.all(color: AizuColors.textPrimary, width: 3),
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),

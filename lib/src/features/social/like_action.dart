@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +34,7 @@ class LikeAction extends ConsumerWidget {
         onPressed: () => _showLikers(context, ref, pid),
         icon: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 20),
         label: Text('${count.value ?? 0}',
-            style: const TextStyle(color: Colors.white)),
+            style: const TextStyle(color: AizuColors.textPrimary)),
       );
     }
 
@@ -63,7 +64,7 @@ class LikeAction extends ConsumerWidget {
   void _showLikers(BuildContext context, WidgetRef ref, String pid) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: AizuColors.surface,
       builder: (_) => Consumer(
         builder: (c, r, _) {
           final likers = r.watch(likersProvider(pid));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/aizu_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -43,9 +44,9 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
     final decksAsync = ref.watch(decksProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AizuColors.kinari,
       appBar: AppBar(
-        title: const Text('My Decks & Cards', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
+        title: const Text('デッキ & カード', style: TextStyle(fontWeight: FontWeight.w700, color: AizuColors.textPrimary)),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -62,8 +63,8 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
           TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(text: 'Cards'),
-              Tab(text: 'Decks'),
+              Tab(text: 'カード'),
+              Tab(text: 'デッキ'),
             ],
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Colors.grey,
@@ -103,9 +104,9 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
                       headerStyle: const HeaderStyle(
                         titleCentered: true,
                         formatButtonVisible: false,
-                        titleTextStyle: TextStyle(color: Colors.white),
-                        leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
-                        rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
+                        titleTextStyle: TextStyle(color: AizuColors.textPrimary),
+                        leftChevronIcon: Icon(Icons.chevron_left, color: AizuColors.textPrimary),
+                        rightChevronIcon: Icon(Icons.chevron_right, color: AizuColors.textPrimary),
                       ),
                       calendarStyle: CalendarStyle(
                         selectedDecoration: BoxDecoration(
@@ -113,14 +114,14 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
                           shape: BoxShape.circle,
                         ),
                         selectedTextStyle: const TextStyle(
-                          color: Colors.black, 
+                          color: AizuColors.kinari, 
                           fontWeight: FontWeight.bold
                         ),
                         todayDecoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                           shape: BoxShape.circle,
                         ),
-                        defaultTextStyle: const TextStyle(color: Colors.white),
+                        defaultTextStyle: const TextStyle(color: AizuColors.textPrimary),
                         weekendTextStyle: const TextStyle(color: Colors.white70),
                         outsideTextStyle: const TextStyle(color: Colors.grey),
                         markersAlignment: Alignment.bottomCenter,
@@ -202,7 +203,7 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.layers, size: 64, color: Colors.grey.shade800),
+                            Icon(LucideIcons.layers, size: 64, color: AizuColors.textSecondary),
                             const SizedBox(height: 16),
                             const Text(
                               'No decks created yet.',
@@ -238,10 +239,10 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
   Widget _buildDeckItem(BuildContext context, DeckModel deck) {
     return Card(
       elevation: 0,
-      color: const Color(0xFF141414),
+      color: AizuColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        side: BorderSide(color: AizuColors.textPrimary.withOpacity(0.1)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -256,7 +257,7 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
         ),
         title: Text(
           deck.title, 
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)
+          style: const TextStyle(fontWeight: FontWeight.bold, color: AizuColors.textPrimary)
         ),
         subtitle: Text(
           '${deck.cards.length} cards • ${deck.location}',
