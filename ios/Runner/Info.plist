@@ -67,8 +67,12 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location to show experiences nearby.</string>
+	<string>近くの体験カードの表示や、お店への訪問確認（現在地の確認）に位置情報を使います。</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs access to location to show experiences nearby.</string>
+	<string>近くの体験カードの表示や、お店への訪問確認（現在地の確認）に位置情報を使います。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>お店のQRコードの読み取りと、現地での写真撮影にカメラを使います。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>カードに使う写真を選ぶために写真ライブラリにアクセスします。</string>
 </dict>
 </plist>

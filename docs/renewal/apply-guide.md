@@ -94,6 +94,20 @@ QRコードには `set_store_qr_token` に渡した**平文トークン**を埋�
 - **メール認証の有効化**（Authentication → Providers → Email、Confirm email を ON、必要なら SMTP 設定）。認証フェーズのコード実装と対で必要。
 - **アカウント削除の Edge Function**（service role で `auth.admin.deleteUser` → `public.users` 削除 → 個人データは `ON DELETE CASCADE` で一括削除）。認証フェーズで実装・デプロイ（`supabase functions deploy`）。Service Role Key はクライアントに置かない。
 
+## 5.5 訪問確認フロー（feature/visit-verification）で必要なこと
+
+- **新規パッケージ**: `mobile_scanner`（QR読取）。`flutter pub get` 済み。
+- **権限**:
+  - iOS `Info.plist`: `NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription` / 位置情報（追記済み）。
+  - Android `AndroidManifest.xml`: `CAMERA` / `ACCESS_FINE|COARSE_LOCATION`（追記済み）。
+  - 初回ビルド後、実機で権限ダイアログを許可すること。
+- **店舗QRコード**: `set_store_qr_token(store_id, '<平文トークン>')` で登録した**平文トークン**をQRコードに埋め込んで店頭に掲示する（任意のQR生成ツールで可）。アプリはスキャンした平文を `verify_visit` に渡し、サーバーがハッシュ照合＋GPS(100m)判定する。
+- **検証は実機必須**: QR/カメラ/GPS はシミュレータでは完全検証できない。テスト手順:
+  1. `stores` に会津の実在店舗を数件登録（緯度経度）、`theme_stores` で2〜3店舗を1テーマに。
+  2. 各店舗の平文トークンでQR画像を作成。
+  3. 実機を店舗近辺（100m以内）に持ち込み、Feed→テーマ→未訪問スロット→「写真を撮る」前にQRスキャン。
+  4. GPSが遠い/違うQRだと弾かれること、正しいと撮影→カード作成→進捗+1 を確認。
+
 ## 6. 既知の注意点
 
 - `database/supabase/migrations/supabase_schema_update.sql:65` の `private_cards_location_idx` は `private_cards.location_coords` を参照するが初期スキーマに同列がない。既存DBで適用済みか／エラーになっていないかを確認（本リニューアルでは変更しない）。

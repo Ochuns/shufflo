@@ -26,6 +26,8 @@ import '../features/social/friend_profile_screen.dart';
 import '../features/social/notifications_screen.dart';
 import '../features/feed/theme_detail_screen.dart';
 import '../features/coupons/coupons_screen.dart';
+import '../features/visit/visit_verification_screen.dart';
+import '../models/visit_models.dart';
 
 /// 認証状態に応じて許可される公開ルート（未ログインでも到達可能）。
 const _publicRoutes = {'/login', '/signup', '/verify-email'};
@@ -120,6 +122,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/coupons',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const CouponsScreen(),
+      ),
+      // --- 訪問確認フロー ---
+      GoRoute(
+        path: '/visit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final args = state.extra as Map<String, String>;
+          return VisitVerificationScreen(
+            storeId: args['storeId']!,
+            storeName: args['storeName']!,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/create_card',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            PostScreen(visitContext: state.extra as VisitContext),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
