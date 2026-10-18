@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/theme_models.dart';
 import '../../models/theme_providers.dart';
+import '../../common_widgets/aizu_motifs.dart';
 
 /// テーマ別コレクション一覧（§5.4）。進捗率の高い順・縦並び・コンパクト表示。
 class FeedScreen extends ConsumerWidget {
@@ -22,10 +23,18 @@ class FeedScreen extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-              child: Text(
-                '会津めぐり',
-                style: GoogleFonts.outfit(
-                    fontSize: 28, fontWeight: FontWeight.w800, color: AizuColors.textPrimary),
+              child: Row(
+                children: [
+                  const TsurugajoIcon(size: 36),
+                  const SizedBox(width: 10),
+                  Text(
+                    '会津めぐり',
+                    style: GoogleFonts.outfit(
+                        fontSize: 28, fontWeight: FontWeight.w800, color: AizuColors.textPrimary),
+                  ),
+                  const SizedBox(width: 8),
+                  const AkabekoIcon(size: 30),
+                ],
               ),
             ),
             Expanded(

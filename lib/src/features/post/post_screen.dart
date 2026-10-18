@@ -271,7 +271,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                     Text(
                       _isFront ? 'This side will be visible on the feed.' : 'This side is your personal secret journal.',
                       style: const TextStyle(
-                        color: Colors.white54,
+                        color: AizuColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -281,7 +281,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                       icon: const Icon(LucideIcons.repeat),
                       label: Text(_isFront ? 'Flip to Private Side' : 'Flip to Public Side'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.1),
+                        backgroundColor: AizuColors.surfaceAlt,
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -296,7 +296,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                 style: const TextStyle(color: AizuColors.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'カテゴリ',
-                  labelStyle: const TextStyle(color: Colors.white70),
+                  labelStyle: const TextStyle(color: AizuColors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.3)),
@@ -315,7 +315,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
               const SizedBox(height: 16),
 
               // UI Element for rating (Restored)
-              const Text('Rating', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white70)),
+              const Text('Rating', style: TextStyle(fontWeight: FontWeight.w600, color: AizuColors.textSecondary)),
               const SizedBox(height: 8),
               Row(
                 children: List.generate(5, (index) {
@@ -347,7 +347,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                     style: const TextStyle(color: AizuColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Add to Deck (Optional)',
-                      labelStyle: const TextStyle(color: Colors.white70),
+                      labelStyle: const TextStyle(color: AizuColors.textSecondary),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.3)),

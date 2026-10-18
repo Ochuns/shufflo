@@ -160,9 +160,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Container(
                   color: AizuColors.kinari,
                   child: TabBar(
-                    labelColor: Colors.white,
+                    labelColor: AizuColors.akabeko,
                     unselectedLabelColor: AizuColors.textSecondary,
-                    indicatorColor: Colors.white,
+                    indicatorColor: AizuColors.akabeko,
                     indicatorWeight: 2,
                     labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
                     tabs: const [

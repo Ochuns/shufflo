@@ -122,7 +122,7 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
                           shape: BoxShape.circle,
                         ),
                         defaultTextStyle: const TextStyle(color: AizuColors.textPrimary),
-                        weekendTextStyle: const TextStyle(color: Colors.white70),
+                        weekendTextStyle: const TextStyle(color: AizuColors.textSecondary),
                         outsideTextStyle: const TextStyle(color: Colors.grey),
                         markersAlignment: Alignment.bottomCenter,
                       ),
@@ -141,11 +141,11 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> with SingleTicker
                         },
                       ),
                       daysOfWeekStyle: const DaysOfWeekStyle(
-                        weekdayStyle: TextStyle(color: Colors.white70),
-                        weekendStyle: TextStyle(color: Colors.white70),
+                        weekdayStyle: TextStyle(color: AizuColors.textSecondary),
+                        weekendStyle: TextStyle(color: AizuColors.textSecondary),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    const Divider(height: 1, color: AizuColors.border),
                     Expanded(
                       child: myCardsAsync.when(
                         loading: () => const Center(child: CircularProgressIndicator()),
