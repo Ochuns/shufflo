@@ -25,6 +25,7 @@ import '../features/social/friends_list_screen.dart';
 import '../features/social/friend_profile_screen.dart';
 import '../features/social/notifications_screen.dart';
 import '../features/feed/theme_detail_screen.dart';
+import '../features/coupons/coupons_screen.dart';
 
 /// 認証状態に応じて許可される公開ルート（未ログインでも到達可能）。
 const _publicRoutes = {'/login', '/signup', '/verify-email'};
@@ -114,6 +115,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/theme',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => ThemeDetailScreen(themeId: state.extra as String),
+      ),
+      GoRoute(
+        path: '/coupons',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CouponsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
