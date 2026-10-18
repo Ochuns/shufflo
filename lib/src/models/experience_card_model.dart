@@ -19,17 +19,24 @@ extension ExperienceCategoryExtension on ExperienceCategory {
   String get label {
     switch (this) {
       case ExperienceCategory.restaurant:
-        return 'Restaurant';
+        return '飲食店';
       case ExperienceCategory.cafe:
-        return 'Cafe';
+        return 'カフェ';
       case ExperienceCategory.sightseeing:
-        return 'Sightseeing';
+        return '観光';
       case ExperienceCategory.amusement:
-        return 'Amusement';
+        return '遊び';
       case ExperienceCategory.other:
-        return 'Other';
+        return 'その他';
     }
   }
+
+  /// 「会津の食」テーマで、カード作成時にユーザーへ提示するカテゴリ（飲食中心）。
+  /// enum 自体は残し（既存データ・将来拡張のため）、選択肢だけを絞る。
+  static const List<ExperienceCategory> foodCategories = [
+    ExperienceCategory.restaurant,
+    ExperienceCategory.cafe,
+  ];
 
   Color get color {
     switch (this) {

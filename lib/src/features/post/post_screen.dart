@@ -250,7 +250,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                 dropdownColor: const Color(0xFF2A2A2A),
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'カテゴリ',
                   labelStyle: const TextStyle(color: Colors.white70),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -262,7 +262,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                   ),
                 ),
                 value: _selectedCategory,
-                items: ExperienceCategory.values.map((cat) {
+                items: ExperienceCategoryExtension.foodCategories.map((cat) {
                   return DropdownMenuItem(value: cat, child: Text(cat.label));
                 }).toList(),
                 onChanged: (val) => setState(() => _selectedCategory = val),

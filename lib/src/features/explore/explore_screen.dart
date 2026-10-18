@@ -377,7 +377,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> with TickerProvid
                       },
                     ),
                   ),
-                  ...ExperienceCategory.values.map((cat) {
+                  ...ExperienceCategoryExtension.foodCategories.map((cat) {
                     final isSelected = _draftSelectedCategory == cat;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
