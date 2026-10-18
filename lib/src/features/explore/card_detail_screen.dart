@@ -179,7 +179,7 @@ class CardDetailScreen extends ConsumerWidget {
           canDelete
               ? 'This card and its public posts will be moved to your history and not be visible to others. It will also be removed from any decks it belongs to.'
               : 'This card cannot be deleted because it does not have a post ID.',
-          style: const TextStyle(color: Colors.white70),
+          style: const TextStyle(color: AizuColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -247,9 +247,9 @@ class CardDetailScreen extends ConsumerWidget {
               style: const TextStyle(color: AizuColors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
                 labelText: 'タイトル',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AizuColors.textSecondary),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: AizuColors.surfaceAlt,
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(12),
@@ -258,7 +258,7 @@ class CardDetailScreen extends ConsumerWidget {
                   borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                prefixIcon: const Icon(Icons.title, color: Colors.white54),
+                prefixIcon: const Icon(Icons.title, color: AizuColors.textSecondary),
               ),
             ),
             const SizedBox(height: 16),
@@ -268,10 +268,10 @@ class CardDetailScreen extends ConsumerWidget {
               maxLines: 4,
               decoration: InputDecoration(
                 labelText: '詳細',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AizuColors.textSecondary),
                 alignLabelWithHint: true,
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: AizuColors.surfaceAlt,
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(12),
@@ -282,7 +282,7 @@ class CardDetailScreen extends ConsumerWidget {
                 ),
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 60),
-                  child: Icon(Icons.notes, color: Colors.white54),
+                  child: Icon(Icons.notes, color: AizuColors.textSecondary),
                 ),
               ),
             ),

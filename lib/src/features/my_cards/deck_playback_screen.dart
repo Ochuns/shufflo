@@ -54,7 +54,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               SizedBox(height: 12),
               Text("Create a new card from the camera button\nand select this deck to add it.", 
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white54, fontSize: 14)),
+                style: TextStyle(color: AizuColors.textSecondary, fontSize: 14)),
             ],
           ),
         ),
@@ -94,7 +94,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 2.0),
                       height: 4.0,
                       decoration: BoxDecoration(
-                        color: index <= _currentIndex ? Colors.white : Colors.white.withOpacity(0.3),
+                        color: index <= _currentIndex ? AizuColors.akabeko : AizuColors.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -192,7 +192,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
         title: const Text('このデッキを削除する？', style: TextStyle(color: AizuColors.textPrimary)),
         content: const Text(
           'Are you sure you want to delete this deck? This action cannot be undone.',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: AizuColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -245,9 +245,9 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               style: const TextStyle(color: AizuColors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
                 labelText: 'タイトル',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AizuColors.textSecondary),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: AizuColors.surfaceAlt,
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(12),
@@ -256,7 +256,7 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                   borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                prefixIcon: const Icon(LucideIcons.type, color: Colors.white54),
+                prefixIcon: const Icon(LucideIcons.type, color: AizuColors.textSecondary),
               ),
             ),
             const SizedBox(height: 20),

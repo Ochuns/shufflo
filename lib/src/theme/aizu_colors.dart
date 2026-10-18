@@ -26,8 +26,8 @@ class AizuColors {
   static const Color textSecondary = Color(0xFF7A6E60); // 落ち着いた茶グレー
   static const Color textOnDark = Color(0xFFFFFDF8);
 
-  // --- 枠線・区切り ---
-  static Color border = const Color(0xFF2B2420).withValues(alpha: 0.10);
+  // --- 枠線・区切り ---（墨色の約10%。const にして const ウィジェットでも使える）
+  static const Color border = Color(0x1A2B2420);
 
   // --- 補助 ---
   static const Color gold = Color(0xFFC89B3C); // 報酬・レアリティ

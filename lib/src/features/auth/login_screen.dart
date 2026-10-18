@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_repository.dart';
 import 'auth_form_fields.dart';
+import '../../common_widgets/aizu_motifs.dart';
 
 /// ログイン画面。
 class LoginScreen extends ConsumerStatefulWidget {
@@ -63,11 +64,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('Shufflo', style: Theme.of(context).textTheme.headlineMedium),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const TsurugajoIcon(size: 44),
+                        const SizedBox(width: 10),
+                        const AkabekoIcon(size: 40),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Shufflo',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                        textAlign: TextAlign.center),
                     const SizedBox(height: 8),
-                    const Text('ログインして、会津の体験を集めよう'),
+                    const Text('ログインして、会津の体験を集めよう',
+                        textAlign: TextAlign.center),
                     const SizedBox(height: 32),
                     AuthEmailField(controller: _emailCtrl, enabled: !_loading),
                     const SizedBox(height: 16),
