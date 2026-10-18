@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/theme_models.dart';
 import '../../models/theme_providers.dart';
@@ -153,7 +154,7 @@ class _SlotTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final tile = Container(
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(16),
@@ -187,6 +188,17 @@ class _SlotTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    // 未訪問の店舗スロットはタップで訪問確認フローを開始する（§11）
+    if (slot.visited) return tile;
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => context.push('/visit', extra: {
+        'storeId': slot.storeId,
+        'storeName': slot.storeName,
+      }),
+      child: tile,
     );
   }
 

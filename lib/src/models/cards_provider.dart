@@ -10,7 +10,8 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     return await repo.fetchAllCards();
   }
 
-  Future<void> submitPost({
+  /// カードを作成し、生成された postId を返す（訪問確認フローで進捗更新に使う）。
+  Future<String> submitPost({
     required String title,
     required ExperienceCategory category,
     required double rating,
@@ -24,7 +25,7 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     List<String>? tags,
   }) async {
     final repo = ref.read(supabaseRepositoryProvider);
-    await repo.submitPost(
+    final postId = await repo.submitPost(
       title: title,
       category: category,
       rating: rating,
@@ -41,6 +42,7 @@ class CardsNotifier extends AsyncNotifier<List<ExperienceCardModel>> {
     ref.invalidateSelf();
     ref.invalidate(decksProvider); // デッキ一覧を最新に更新
     await future;
+    return postId;
   }
 
   Future<void> deleteCard(String postId) async {

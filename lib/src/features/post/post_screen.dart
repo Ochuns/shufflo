@@ -1,17 +1,23 @@
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/experience_card_model.dart';
 import '../../models/cards_provider.dart';
 import '../../models/decks_provider.dart';
+import '../../models/visit_models.dart';
+import '../../models/visit_repository.dart';
 import '../../utils/exif_utils.dart';
 import 'widgets/tcg_card_editor_components.dart';
 
 class PostScreen extends ConsumerStatefulWidget {
-  const PostScreen({super.key});
+  /// 訪問確認フローから来た場合のコンテキスト（店舗・確認ID・撮影写真）。
+  /// null の場合は通常のカード作成（GPS/QR検証なし）。
+  const PostScreen({super.key, this.visitContext});
+
+  final VisitContext? visitContext;
 
   @override
   ConsumerState<PostScreen> createState() => _PostScreenState();
@@ -38,6 +44,20 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
   double _targetAngle = 0.0;
   bool _isFront = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final vc = widget.visitContext;
+    if (vc != null) {
+      // 訪問確認フロー: 撮影写真・店舗位置・店名を自動入力
+      _publicImagePath = vc.capturedPhotoPath;
+      _latitude = vc.latitude;
+      _longitude = vc.longitude;
+      _titleController.text = vc.storeName;
+      _selectedCategory = ExperienceCategory.restaurant;
+    }
+  }
 
   @override
   void dispose() {
@@ -75,19 +95,19 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
   Future<void> _submitCard() async {
     if (_titleController.text.isEmpty || _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill out the title and category.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('タイトルとカテゴリを入力してけさい。')));
       return;
     }
 
     if (_publicImagePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please pick a public photo.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('公開用の写真を選んでけさい。')));
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await ref.read(cardsProvider.notifier).submitPost(
+      final postId = await ref.read(cardsProvider.notifier).submitPost(
         title: _titleController.text,
         category: _selectedCategory!,
         rating: _rating,
@@ -100,10 +120,34 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         deckId: _selectedDeckId,
       );
 
+      // 訪問確認フロー: 保存成功後にテーマ進捗を更新（カード保存前には増えない）
+      final vc = widget.visitContext;
+      if (vc != null) {
+        try {
+          await ref.read(visitRepositoryProvider).completeThemeVisit(
+                verificationId: vc.verificationId,
+                postId: postId,
+              );
+        } catch (e) {
+          debugPrint('completeThemeVisit failed: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('カードは保存できたが、テーマ進捗の更新に失敗したよ。')),
+            );
+          }
+        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('カードを作成して、テーマ進捗を更新したぞ！')),
+        );
+        context.pop(); // 訪問フローは作成画面を閉じて戻る
+        return;
+      }
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cards created successfully!')));
-      
-      // Reset Form
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('カードを作成したぞ！')));
+
+      // Reset Form（通常フロー）
       setState(() {
         _titleController.clear();
         _publicCommentController.clear();
@@ -120,7 +164,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ' + e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('エラー: ' + e.toString())));
       debugPrint('Submit Error: ' + e.toString());
     } finally {
       if (mounted) {
