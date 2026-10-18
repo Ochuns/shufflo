@@ -43,6 +43,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           elevation: 0,
           actions: [
             IconButton(
+              icon: const Icon(LucideIcons.ticket, color: Colors.white),
+              tooltip: 'クーポン',
+              onPressed: () => context.push('/coupons'),
+            ),
+            IconButton(
               icon: const Icon(LucideIcons.search, color: Colors.white),
               tooltip: 'ユーザーを探す',
               onPressed: () => context.push('/user_search'),
