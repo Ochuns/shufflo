@@ -315,7 +315,10 @@ class SupabaseRepository {
   }
 
   // 近接カードの取得 (PostGIS RPCを使った手法)
-  Future<List<ExperienceCardModel>> fetchNearbyPublicCards(double lat, double lon, {double radiusMeters = 5000, int limit = 5}) async {
+  // category を指定するとサーバー側で絞り込む (5引数版RPC)。未指定なら全カテゴリ。
+  // 既存の「半径5km・最大10件」挙動を維持 (仕様5.1)。
+  Future<List<ExperienceCardModel>> fetchNearbyPublicCards(double lat, double lon,
+      {double radiusMeters = 5000, int limit = 10, ExperienceCategory? category}) async {
     final List<ExperienceCardModel> cards = [];
 
     // アプリのデータディレクトリを取得（パス復元用）
@@ -323,12 +326,16 @@ class SupabaseRepository {
     final imagesDirPath = '${directory.path}/stored-images';
 
     try {
-      final pubRes = await _supabase.rpc('get_nearby_public_cards', params: {
+      final params = <String, dynamic>{
         'target_lat': lat,
         'target_lon': lon,
         'max_dist_meters': radiusMeters,
         'limit_num': limit,
-      }).select('*, users(username, avatar_url), locations(latitude, longitude)');
+      };
+      if (category != null) params['p_category'] = category.name;
+      final pubRes = await _supabase
+          .rpc('get_nearby_public_cards', params: params)
+          .select('*, users(username, avatar_url), locations(latitude, longitude)');
 
       for (var row in pubRes) {
         cards.add(_mapPublicCardRow(row, imagesDirPath));
