@@ -47,16 +47,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
                   isSelected: navigationShell.currentIndex == 2,
                 ),
                 _NavBarItem(
-                  icon: LucideIcons.layoutGrid,
-                  label: '会津めぐり',
-                  isSelected: navigationShell.currentIndex == 3,
-                  onTap: () => navigationShell.goBranch(3),
-                ),
-                _NavBarItem(
                   icon: LucideIcons.user,
                   label: 'プロフィール',
-                  isSelected: navigationShell.currentIndex == 4,
-                  onTap: () => navigationShell.goBranch(4),
+                  isSelected: navigationShell.currentIndex == 3,
+                  onTap: () => navigationShell.goBranch(3),
                 ),
               ],
             ),
