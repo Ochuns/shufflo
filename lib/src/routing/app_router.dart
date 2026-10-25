@@ -5,7 +5,6 @@ import 'scaffold_with_nav_bar.dart';
 import '../models/experience_card_model.dart';
 import '../models/deck_model.dart';
 
-import '../features/feed/feed_screen.dart';
 import '../features/explore/explore_screen.dart';
 import '../features/explore/card_detail_screen.dart';
 import '../features/my_cards/my_cards_screen.dart';
@@ -24,7 +23,6 @@ import '../features/social/user_search_screen.dart';
 import '../features/social/friends_list_screen.dart';
 import '../features/social/friend_profile_screen.dart';
 import '../features/social/notifications_screen.dart';
-import '../features/feed/theme_detail_screen.dart';
 import '../features/coupons/coupons_screen.dart';
 import '../features/visit/visit_verification_screen.dart';
 import '../models/visit_models.dart';
@@ -36,7 +34,6 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _mapNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'map');
 final _myCardsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'my_cards');
 final _postNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'post');
-final _feedNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'feed');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -114,11 +111,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
-        path: '/theme',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ThemeDetailScreen(themeId: state.extra as String),
-      ),
-      GoRoute(
         path: '/coupons',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const CouponsScreen(),
@@ -170,15 +162,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/post',
                 builder: (context, state) => const PostScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            navigatorKey: _feedNavigatorKey,
-            routes: [
-              GoRoute(
-                path: '/feed',
-                builder: (context, state) => const FeedScreen(),
               ),
             ],
           ),
