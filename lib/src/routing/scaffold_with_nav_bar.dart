@@ -42,9 +42,11 @@ class ScaffoldWithNavBar extends StatelessWidget {
                   isSelected: navigationShell.currentIndex == 1,
                   onTap: () => navigationShell.goBranch(1),
                 ),
-                _PostButton(
-                  onTap: () => navigationShell.goBranch(2),
+                _NavBarItem(
+                  icon: LucideIcons.camera,
+                  label: 'クリエイト',
                   isSelected: navigationShell.currentIndex == 2,
+                  onTap: () => navigationShell.goBranch(2),
                 ),
                 _NavBarItem(
                   icon: LucideIcons.user,
@@ -101,47 +103,6 @@ class _NavBarItem extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PostButton extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool isSelected;
-
-  const _PostButton({
-    required this.onTap,
-    required this.isSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 54,
-        height: 54,
-        decoration: BoxDecoration(
-          color: AizuColors.akabeko,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? AizuColors.akabekoDark : AizuColors.akabeko,
-            width: 1.5,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: AizuColors.akabeko.withValues(alpha: 0.3),
-                blurRadius: 10,
-              ),
-          ],
-        ),
-        child: const Icon(
-          LucideIcons.plus,
-          color: AizuColors.textOnDark,
-          size: 28,
         ),
       ),
     );
