@@ -36,7 +36,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          const SnackBar(content: Text('デッキの作成に失敗しました')),
         );
       }
     } finally {
@@ -57,7 +57,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Create New Deck',
+          '新しいデッキを作成',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AizuColors.textPrimary),
         ),
         actions: [
@@ -81,7 +81,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Deck Title',
+              'デッキ名',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -94,7 +94,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
               autofocus: true,
               style: const TextStyle(color: AizuColors.textPrimary, fontSize: 18),
               decoration: InputDecoration(
-                hintText: 'e.g., Tokyo Trip 2026',
+                hintText: '例：会津若松めぐり 2026',
                 hintStyle: TextStyle(color: AizuColors.textSecondary),
                 filled: true,
                 fillColor: AizuColors.surface,
@@ -108,7 +108,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'This will be the base for your new collection of experiences.',
+              'このデッキに体験カードをまとめていきます。',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AizuColors.textSecondary,

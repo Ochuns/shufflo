@@ -26,10 +26,12 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
   Widget build(BuildContext context) {
     // プロバイダーから最新のデッキ情報を取得
     final decksAsync = ref.watch(decksProvider);
-    final latestDeck = decksAsync.value?.cast<DeckModel?>().firstWhere(
-      (d) => d?.id == widget.deck.id,
-      orElse: () => widget.deck,
-    ) ?? widget.deck;
+    final latestDeck =
+        decksAsync.value?.cast<DeckModel?>().firstWhere(
+          (d) => d?.id == widget.deck.id,
+          orElse: () => widget.deck,
+        ) ??
+        widget.deck;
 
     if (latestDeck.cards.isEmpty) {
       return Scaffold(
@@ -50,11 +52,20 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("This deck is empty.", style: TextStyle(color: AizuColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                "このデッキにはまだカードがありません",
+                style: TextStyle(
+                  color: AizuColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               SizedBox(height: 12),
-              Text("Create a new card from the camera button\nand select this deck to add it.", 
+              Text(
+                "カードを作成するときに\nこのデッキを選ぶと追加されます",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AizuColors.textSecondary, fontSize: 14)),
+                style: TextStyle(color: AizuColors.textSecondary, fontSize: 14),
+              ),
             ],
           ),
         ),
@@ -86,7 +97,10 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
           // 2. Journey Progress Indicator (Timeline at the top)
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 children: List.generate(latestDeck.cards.length, (index) {
                   return Expanded(
@@ -94,7 +108,9 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 2.0),
                       height: 4.0,
                       decoration: BoxDecoration(
-                        color: index <= _currentIndex ? AizuColors.akabeko : AizuColors.border,
+                        color: index <= _currentIndex
+                            ? AizuColors.akabeko
+                            : AizuColors.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -103,10 +119,11 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               ),
             ),
           ),
-          
+
           // 3. Deck Custom Top Bar (Back, Title, Actions)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 24, // 戻るボタンの上に少し広めのマージンを確保
+            top:
+                MediaQuery.of(context).padding.top + 24, // 戻るボタンの上に少し広めのマージンを確保
             left: 0,
             right: 0,
             child: Padding(
@@ -114,13 +131,13 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                   // Back Button (Left)
+                  // Back Button (Left)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       icon: const Icon(
-                        Icons.arrow_back, 
-                        color: AizuColors.textPrimary, 
+                        Icons.arrow_back,
+                        color: AizuColors.textPrimary,
                         size: 28,
                         shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
                       ),
@@ -134,8 +151,8 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                   Text(
                     latestDeck.title,
                     style: const TextStyle(
-                      color: AizuColors.textPrimary, 
-                      fontWeight: FontWeight.bold, 
+                      color: AizuColors.textPrimary,
+                      fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
                       fontSize: 18,
                       shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
@@ -152,10 +169,12 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                       children: [
                         IconButton(
                           icon: const Icon(
-                            Icons.edit_outlined, 
-                            color: AizuColors.textPrimary, 
+                            Icons.edit_outlined,
+                            color: AizuColors.textPrimary,
                             size: 24,
-                            shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                            shadows: [
+                              Shadow(color: Colors.black54, blurRadius: 8),
+                            ],
                           ),
                           onPressed: () => _showEditSheet(context, latestDeck),
                           padding: const EdgeInsets.all(8),
@@ -163,12 +182,15 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
                         ),
                         IconButton(
                           icon: const Icon(
-                            Icons.delete_outline, 
-                            color: AizuColors.textPrimary, 
+                            Icons.delete_outline,
+                            color: AizuColors.textPrimary,
                             size: 24,
-                            shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                            shadows: [
+                              Shadow(color: Colors.black54, blurRadius: 8),
+                            ],
                           ),
-                          onPressed: () => _showDeleteDialog(context, latestDeck),
+                          onPressed: () =>
+                              _showDeleteDialog(context, latestDeck),
                           padding: const EdgeInsets.all(8),
                           constraints: const BoxConstraints(),
                         ),
@@ -189,9 +211,12 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AizuColors.surfaceAlt,
-        title: const Text('このデッキを削除する？', style: TextStyle(color: AizuColors.textPrimary)),
+        title: const Text(
+          'このデッキを削除する？',
+          style: TextStyle(color: AizuColors.textPrimary),
+        ),
         content: const Text(
-          'Are you sure you want to delete this deck? This action cannot be undone.',
+          'この操作は取り消せません。',
           style: TextStyle(color: AizuColors.textSecondary),
         ),
         actions: [
@@ -205,9 +230,9 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               if (dialogContext.mounted) {
                 Navigator.pop(dialogContext); // Close dialog
                 context.pop(); // Go back to list
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Deck deleted.')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('デッキを削除しました')));
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
@@ -220,12 +245,14 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
 
   void _showEditSheet(BuildContext context, DeckModel targetDeck) {
     final titleController = TextEditingController(text: targetDeck.title);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AizuColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -237,26 +264,44 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Edit Deck Title', style: TextStyle(color: AizuColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(
+              'デッキ名を編集',
+              style: TextStyle(
+                color: AizuColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 20),
             TextField(
               controller: titleController,
               autofocus: true,
-              style: const TextStyle(color: AizuColors.textPrimary, fontSize: 16),
+              style: const TextStyle(
+                color: AizuColors.textPrimary,
+                fontSize: 16,
+              ),
               decoration: InputDecoration(
                 labelText: 'タイトル',
                 labelStyle: const TextStyle(color: AizuColors.textSecondary),
                 filled: true,
                 fillColor: AizuColors.surfaceAlt,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: AizuColors.textPrimary.withOpacity(0.2)),
+                  borderSide: BorderSide(
+                    color: AizuColors.textPrimary.withOpacity(0.2),
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+                  borderSide: const BorderSide(
+                    color: Colors.blueAccent,
+                    width: 2,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                prefixIcon: const Icon(LucideIcons.type, color: AizuColors.textSecondary),
+                prefixIcon: const Icon(
+                  LucideIcons.type,
+                  color: AizuColors.textSecondary,
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -264,11 +309,13 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
               onPressed: () async {
                 final newTitle = titleController.text.trim();
                 if (newTitle.isNotEmpty) {
-                  await ref.read(decksProvider.notifier).updateDeck(targetDeck.id, newTitle);
+                  await ref
+                      .read(decksProvider.notifier)
+                      .updateDeck(targetDeck.id, newTitle);
                   if (context.mounted) Navigator.pop(context);
                 }
               },
-              child: const Text('Save Changes'),
+              child: const Text('保存'),
             ),
             const SizedBox(height: 20),
           ],
@@ -283,5 +330,3 @@ class _DeckPlaybackScreenState extends ConsumerState<DeckPlaybackScreen> {
     super.dispose();
   }
 }
-
-

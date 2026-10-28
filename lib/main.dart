@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'src/routing/app_router.dart';
 import 'src/theme/app_theme.dart';
@@ -8,6 +9,8 @@ import 'src/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  // カレンダー等の日付表示を日本語にするため
+  await initializeDateFormatting('ja_JP');
 
   // Supabase Init
   await Supabase.initialize(

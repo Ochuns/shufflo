@@ -29,10 +29,10 @@ class TcgCardView extends StatelessWidget {
 
   String _getRarityLabel(CardRarity rarity) {
     switch (rarity) {
-      case CardRarity.common: return 'Common';
-      case CardRarity.rare: return 'Rare';
-      case CardRarity.epic: return 'Epic';
-      case CardRarity.legendary: return 'Legendary';
+      case CardRarity.common: return 'コモン';
+      case CardRarity.rare: return 'レア';
+      case CardRarity.epic: return 'エピック';
+      case CardRarity.legendary: return 'レジェンダリー';
     }
   }
 
@@ -139,7 +139,7 @@ class TcgCardView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _getRarityLabel(model.rarity).toUpperCase(),
+                        _getRarityLabel(model.rarity),
                         style: TextStyle(
                           color: rarityColor,
                           fontSize: isCompact ? 8 : 10,
