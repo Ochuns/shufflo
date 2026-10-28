@@ -7,8 +7,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/experience_card_model.dart';
 import '../../models/social_providers.dart';
+import '../../models/supabase_repository.dart';
 import '../../common_widgets/rating_stars.dart';
 import '../../common_widgets/category_tag.dart';
+import '../../utils/relative_time.dart';
+import 'like_action.dart';
 
 /// 指定ユーザーの Public/Private 統合タイムライン（新しい順）。
 class TimelineList extends ConsumerWidget {
@@ -18,13 +21,14 @@ class TimelineList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(timelineProvider(userId));
+    final myId = ref.watch(supabaseRepositoryProvider).currentUserId;
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => const Center(child: Text('読み込みに失敗しました')),
       data: (cards) {
         if (cards.isEmpty) {
           return const Center(
-            child: Text('まだ投稿がねぇな', style: TextStyle(color: Colors.grey)),
+            child: Text('まだ投稿がありません', style: TextStyle(color: Colors.grey)),
           );
         }
         return RefreshIndicator(
@@ -33,7 +37,10 @@ class TimelineList extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             itemCount: cards.length,
             separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _TimelineTile(card: cards[i]),
+            itemBuilder: (_, i) => _TimelineTile(
+              card: cards[i],
+              isOwner: cards[i].authorId == myId,
+            ),
           ),
         );
       },
@@ -42,8 +49,9 @@ class TimelineList extends ConsumerWidget {
 }
 
 class _TimelineTile extends StatelessWidget {
-  const _TimelineTile({required this.card});
+  const _TimelineTile({required this.card, required this.isOwner});
   final ExperienceCardModel card;
+  final bool isOwner;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +68,9 @@ class _TimelineTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: AspectRatio(
                 aspectRatio: 16 / 10,
                 child: Stack(
@@ -69,9 +79,15 @@ class _TimelineTile extends StatelessWidget {
                     _CardImage(card: card),
                     Positioned(
                       top: 8,
-                      left: 8,
-                      child: _VisibilityBadge(isPublic: card.isPublic),
+                      right: 8,
+                      child: _AuthorAvatar(url: card.authorAvatarUrl),
                     ),
+                    if (card.createdAt != null)
+                      Positioned(
+                        right: 8,
+                        bottom: 8,
+                        child: _PostedAtBadge(createdAt: card.createdAt!),
+                      ),
                   ],
                 ),
               ),
@@ -89,22 +105,48 @@ class _TimelineTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AizuColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
+                            color: AizuColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       CategoryTag(category: card.category),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  RatingStars(rating: card.rating),
+                  // 評価の行の右端（カテゴリタグの下）にいいね
+                  // 自分のカードはいいね数、友達のカードはトグル
+                  Row(
+                    children: [
+                      RatingStars(rating: card.rating),
+                      const Spacer(),
+                      // ボタンの余白を詰めて、行の高さが広がらないようにする
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: LikeAction(
+                          postId: card.postId,
+                          authorId: card.authorId ?? '',
+                          isOwner: isOwner,
+                          inactiveColor: AizuColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                   if (card.comment.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
                       card.comment,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AizuColors.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                        color: AizuColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ],
@@ -132,36 +174,67 @@ class _CardImage extends StatelessWidget {
         imageUrl: card.imageUrl,
         fit: BoxFit.cover,
         placeholder: (_, _) => Container(color: AizuColors.surfaceAlt),
-        errorWidget: (_, _, _) =>
-            Container(color: AizuColors.surfaceAlt, child: const Icon(Icons.image_not_supported, color: Colors.grey)),
+        errorWidget: (_, _, _) => Container(
+          color: AizuColors.surfaceAlt,
+          child: const Icon(Icons.image_not_supported, color: Colors.grey),
+        ),
       );
     }
     return Container(color: AizuColors.surfaceAlt);
   }
 }
 
-class _VisibilityBadge extends StatelessWidget {
-  const _VisibilityBadge({required this.isPublic});
-  final bool isPublic;
+/// 写真右下に重ねる「〇時間前」表示。
+class _PostedAtBadge extends StatelessWidget {
+  const _PostedAtBadge({required this.createdAt});
+  final DateTime createdAt;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(isPublic ? Icons.public : Icons.lock_outline, size: 12, color: AizuColors.textPrimary),
-          const SizedBox(width: 4),
-          Text(
-            isPublic ? 'Public' : 'Private',
-            style: const TextStyle(color: AizuColors.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
-          ),
-        ],
+      child: Text(
+        relativeTime(createdAt),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// 写真右上に重ねる投稿者アイコン。
+class _AuthorAvatar extends StatelessWidget {
+  const _AuthorAvatar({required this.url});
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      child: CircleAvatar(
+        radius: 16,
+        backgroundColor: AizuColors.surfaceAlt,
+        backgroundImage: url.isNotEmpty
+            ? CachedNetworkImageProvider(url)
+            : null,
+        child: url.isEmpty
+            ? const Icon(
+                Icons.person,
+                size: 18,
+                color: AizuColors.textSecondary,
+              )
+            : null,
       ),
     );
   }

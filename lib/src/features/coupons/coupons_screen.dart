@@ -23,8 +23,11 @@ class CouponsScreen extends ConsumerWidget {
         data: (coupons) {
           if (coupons.isEmpty) {
             return const Center(
-              child: Text('まだクーポンはねぇな\nテーマを達成してゲットしてけさい',
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+              child: Text(
+                'まだクーポンはありません\nテーマを達成してゲットしてください',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
             );
           }
           return RefreshIndicator(
@@ -58,10 +61,16 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('クーポンを使いますか？'),
-        content: const Text('使用済みにすると元に戻せません。店員さんに見せる直前に押してけさい。'),
+        content: const Text('使用済みにすると元に戻せません。店員さんに見せる直前に押してください。'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('キャンセル')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('使う')),
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('使う'),
+          ),
         ],
       ),
     );
@@ -71,13 +80,15 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
       await ref.read(couponRepositoryProvider).useCoupon(widget.coupon.id);
       ref.invalidate(myCouponsProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('クーポンを使用しました')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('クーポンを使用しました')));
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('使用に失敗しました')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('使用に失敗しました')));
       }
     } finally {
       if (mounted) setState(() => _using = false);
@@ -109,7 +120,11 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.local_activity, color: Colors.amber, size: 32),
+                  const Icon(
+                    Icons.local_activity,
+                    color: Colors.amber,
+                    size: 32,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -121,20 +136,34 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
                               child: Text(
                                 c.rewardTitle ?? '特典',
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.w700, fontSize: 16, color: AizuColors.textPrimary),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: AizuColors.textPrimary,
+                                ),
                               ),
                             ),
                             _StatusBadge(status: status),
                           ],
                         ),
-                        if (c.rewardDescription != null && c.rewardDescription!.isNotEmpty) ...[
+                        if (c.rewardDescription != null &&
+                            c.rewardDescription!.isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(c.rewardDescription!,
-                              style: TextStyle(color: AizuColors.textSecondary, fontSize: 13)),
+                          Text(
+                            c.rewardDescription!,
+                            style: TextStyle(
+                              color: AizuColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                         const SizedBox(height: 8),
-                        Text('有効期限: ${df.format(c.expiresAt)}',
-                            style: TextStyle(color: AizuColors.textSecondary, fontSize: 12)),
+                        Text(
+                          '有効期限: ${df.format(c.expiresAt)}',
+                          style: TextStyle(
+                            color: AizuColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -148,11 +177,16 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                        backgroundColor: Colors.amber, foregroundColor: Colors.black),
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.black,
+                    ),
                     onPressed: _using ? null : _use,
                     icon: _using
                         ? const SizedBox(
-                            height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Icon(Icons.redeem),
                     label: const Text('クーポンを使う'),
                   ),
@@ -193,7 +227,14 @@ class _StatusBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
