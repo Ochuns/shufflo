@@ -106,8 +106,8 @@ class CardDetailScreen extends ConsumerWidget {
                             SnackBar(
                               content: Text(
                                 success
-                                    ? (wasPinned ? 'Unpinned card' : 'Pinned card to Favorites')
-                                    : 'Failed to update Favorites',
+                                    ? (wasPinned ? 'お気に入りから外しました' : 'お気に入りに追加しました')
+                                    : 'お気に入りを更新できませんでした',
                               ),
                               duration: const Duration(seconds: 1),
                             ),
@@ -118,12 +118,12 @@ class CardDetailScreen extends ConsumerWidget {
                       }
                     : null,
                 tooltip: canTogglePin
-                    ? (isPinned ? 'Unpin Card' : 'Pin Card')
+                    ? (isPinned ? 'お気に入りから外す' : 'お気に入りに追加')
                     : (pinnedCardsAsync.isLoading
-                        ? 'Loading Favorites'
+                        ? 'お気に入りを読み込み中'
                         : (pinnedCardsAsync.hasError
-                            ? 'Failed to load favorites. Reload this screen to retry.'
-                            : 'Pin temporarily unavailable')),
+                            ? 'お気に入りを読み込めませんでした。画面を開き直してください。'
+                            : 'お気に入りは一時的に利用できません')),
               ),
               if (isOwner) ...[
                 IconButton(

@@ -8,6 +8,7 @@ import '../../models/social_models.dart';
 import '../../models/social_providers.dart';
 import '../../models/social_repository.dart';
 import '../../models/cards_provider.dart';
+import '../../utils/relative_time.dart';
 
 /// 通知一覧（いいね / 友達申請のみ, §9.2）。
 /// 開いた（タップした）通知だけを既読にする。
@@ -24,7 +25,9 @@ class NotificationsScreen extends ConsumerWidget {
         error: (_, _) => const Center(child: Text('読み込みに失敗しました')),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('通知はねぇよ', style: TextStyle(color: Colors.grey)));
+            return const Center(
+              child: Text('通知はありません', style: TextStyle(color: Colors.grey)),
+            );
           }
           return RefreshIndicator(
             onRefresh: () async {
@@ -54,7 +57,9 @@ class _NotificationTile extends ConsumerWidget {
         await repo.markRead(item.id);
         ref.invalidate(notificationsProvider);
         ref.invalidate(unreadCountProvider);
-      } catch (_) {/* 既読化失敗は致命的でないため無視 */}
+      } catch (_) {
+        /* 既読化失敗は致命的でないため無視 */
+      }
     }
     if (!context.mounted) return;
 
@@ -68,8 +73,9 @@ class _NotificationTile extends ConsumerWidget {
       if (match.isNotEmpty) {
         context.push('/card_detail', extra: match.first);
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('対象のカードが見つかりませんでした')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('対象のカードが見つかりませんでした')));
       }
     }
   }
@@ -95,34 +101,32 @@ class _NotificationTile extends ConsumerWidget {
               child: CircleAvatar(
                 radius: 9,
                 backgroundColor: isLike ? Colors.pinkAccent : Colors.blueAccent,
-                child: Icon(isLike ? Icons.favorite : Icons.person_add_alt_1,
-                    size: 11, color: AizuColors.textPrimary),
+                child: Icon(
+                  isLike ? Icons.favorite : Icons.person_add_alt_1,
+                  size: 11,
+                  color: AizuColors.textPrimary,
+                ),
               ),
             ),
           ],
         ),
         title: Text.rich(
-          TextSpan(children: [
-            TextSpan(
+          TextSpan(
+            children: [
+              TextSpan(
                 text: item.actorUsername,
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-            TextSpan(
-                text: isLike ? ' さんがカードにいいねしました' : ' さんから友達申請が届きました'),
-          ]),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              TextSpan(text: isLike ? ' さんがカードにいいねしました' : ' さんから友達申請が届きました'),
+            ],
+          ),
         ),
-        subtitle: Text(_relativeTime(item.createdAt)),
-        trailing: item.isRead ? null : const Icon(Icons.circle, size: 10, color: Colors.blueAccent),
+        subtitle: Text(relativeTime(item.createdAt)),
+        trailing: item.isRead
+            ? null
+            : const Icon(Icons.circle, size: 10, color: Colors.blueAccent),
         onTap: () => _handleTap(context, ref),
       ),
     );
   }
-}
-
-String _relativeTime(DateTime t) {
-  final d = DateTime.now().difference(t);
-  if (d.inMinutes < 1) return 'たった今';
-  if (d.inHours < 1) return '${d.inMinutes}分前';
-  if (d.inDays < 1) return '${d.inHours}時間前';
-  if (d.inDays < 7) return '${d.inDays}日前';
-  return '${t.year}/${t.month}/${t.day}';
 }

@@ -17,11 +17,15 @@ class LikeAction extends ConsumerWidget {
     required this.postId,
     required this.authorId,
     required this.isOwner,
+    this.inactiveColor = Colors.white,
   });
 
   final String? postId;
   final String authorId;
   final bool isOwner;
+
+  /// いいね前のハートの色。明るい背景に置くときは濃い色を渡す。
+  final Color inactiveColor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +50,7 @@ class LikeAction extends ConsumerWidget {
     final liked = likedAsync.value?.contains(pid) ?? false;
     return IconButton(
       icon: Icon(liked ? Icons.favorite : Icons.favorite_border,
-          color: liked ? Colors.pinkAccent : Colors.white),
+          color: liked ? Colors.pinkAccent : inactiveColor),
       tooltip: liked ? 'いいね解除' : 'いいね',
       onPressed: likedAsync.hasValue
           ? () async {

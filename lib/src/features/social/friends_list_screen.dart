@@ -32,7 +32,7 @@ class FriendsListScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('まだ友達がいねぇな', style: TextStyle(color: Colors.grey)),
+                  const Text('まだ友達がいません', style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: () => context.push('/user_search'),
@@ -51,11 +51,17 @@ class FriendsListScreen extends ConsumerWidget {
                 final f = friends[i];
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundImage: CachedNetworkImageProvider(f.profile.displayAvatar),
+                    backgroundImage: CachedNetworkImageProvider(
+                      f.profile.displayAvatar,
+                    ),
                   ),
                   title: Text(f.profile.username),
                   subtitle: f.profile.bio != null && f.profile.bio!.isNotEmpty
-                      ? Text(f.profile.bio!, maxLines: 1, overflow: TextOverflow.ellipsis)
+                      ? Text(
+                          f.profile.bio!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
                       : null,
                   onTap: () => context.push('/user', extra: f.profile.id),
                 );

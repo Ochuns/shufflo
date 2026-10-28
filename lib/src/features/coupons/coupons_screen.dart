@@ -23,7 +23,7 @@ class CouponsScreen extends ConsumerWidget {
         data: (coupons) {
           if (coupons.isEmpty) {
             return const Center(
-              child: Text('まだクーポンはねぇな\nテーマを達成してゲットしてけさい',
+              child: Text('まだクーポンはありません\nテーマを達成してゲットしてください',
                   textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
             );
           }
@@ -58,7 +58,7 @@ class _CouponCardState extends ConsumerState<_CouponCard> {
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('クーポンを使いますか？'),
-        content: const Text('使用済みにすると元に戻せません。店員さんに見せる直前に押してけさい。'),
+        content: const Text('使用済みにすると元に戻せません。店員さんに見せる直前に押してください。'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('キャンセル')),
           FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('使う')),

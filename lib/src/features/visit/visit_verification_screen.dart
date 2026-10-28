@@ -13,17 +13,23 @@ import '../explore/location_provider.dart';
 /// GPS取得 → 店舗QRスキャン → verify_visit(サーバー判定) → 現地カメラ撮影 →
 /// カード作成画面へ引き継ぎ。進捗はカード保存成功後に更新される。
 class VisitVerificationScreen extends ConsumerStatefulWidget {
-  const VisitVerificationScreen({super.key, required this.storeId, required this.storeName});
+  const VisitVerificationScreen({
+    super.key,
+    required this.storeId,
+    required this.storeName,
+  });
   final String storeId;
   final String storeName;
 
   @override
-  ConsumerState<VisitVerificationScreen> createState() => _VisitVerificationScreenState();
+  ConsumerState<VisitVerificationScreen> createState() =>
+      _VisitVerificationScreenState();
 }
 
 enum _Step { locating, scanning, verifying, capture }
 
-class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScreen> {
+class _VisitVerificationScreenState
+    extends ConsumerState<VisitVerificationScreen> {
   _Step _step = _Step.locating;
   String? _error;
   double? _lat;
@@ -46,7 +52,7 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
     final loc = await ref.read(locationProvider).getCurrentLocation();
     if (!mounted) return;
     if (loc == null) {
-      setState(() => _error = '位置情報を取得できませんでした。設定で位置情報を許可してけさい。');
+      setState(() => _error = '位置情報を取得できませんでした。設定で位置情報を許可してください。');
       return;
     }
     setState(() {
@@ -58,12 +64,16 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_handled || _step != _Step.scanning) return;
-    final raw = capture.barcodes.isNotEmpty ? capture.barcodes.first.rawValue : null;
+    final raw = capture.barcodes.isNotEmpty
+        ? capture.barcodes.first.rawValue
+        : null;
     if (raw == null || raw.isEmpty) return;
     _handled = true;
     setState(() => _step = _Step.verifying);
     try {
-      final vid = await ref.read(visitRepositoryProvider).verifyVisit(
+      final vid = await ref
+          .read(visitRepositoryProvider)
+          .verifyVisit(
             storeId: widget.storeId,
             lat: _lat!,
             lon: _lon!,
@@ -114,9 +124,17 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
     }
     switch (_step) {
       case _Step.locating:
-        return const _Centered(icon: Icons.my_location, text: '現在地を確認してるがらちょっと待ってけさい…', spinner: true);
+        return const _Centered(
+          icon: Icons.my_location,
+          text: '現在地を確認しています。少々お待ちください。',
+          spinner: true,
+        );
       case _Step.verifying:
-        return const _Centered(icon: Icons.verified_user, text: '訪問を確認してるよ…', spinner: true);
+        return const _Centered(
+          icon: Icons.verified_user,
+          text: '訪問を確認しています。',
+          spinner: true,
+        );
       case _Step.scanning:
         return _buildScanner();
       case _Step.capture:
@@ -148,11 +166,17 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Text('お店のQRコードを読み取ってけさい',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'お店のQRコードを読み取ってください',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+                Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ],
           ),
@@ -169,10 +193,10 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
         children: [
           const Icon(Icons.check_circle, color: Colors.green, size: 64),
           const SizedBox(height: 16),
-          Text('訪問を確認したぞ！', style: Theme.of(context).textTheme.titleLarge),
+          Text('訪問を確認しました！', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           const Text(
-            '現地の写真を撮ってカードにしよう。\n（ギャラリーの写真ではテーマの達成にならねぇよ）',
+            '現地の写真を撮ってカードにしよう。\n（ギャラリーの写真はテーマの達成に使えません）',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -188,14 +212,18 @@ class _VisitVerificationScreenState extends ConsumerState<VisitVerificationScree
 }
 
 String _jpVerifyError(String raw) {
-  if (raw.contains('GPS')) return 'お店から離れすぎてるみたいだ。お店の近くで試してけさい。';
-  if (raw.contains('QR')) return 'このお店のQRコードでねぇようだ。もう一度読み取ってけさい。';
-  if (raw.contains('rate limit')) return '少し待ってからもう一度試してけさい。';
-  return '訪問確認に失敗しました。もう一度試してけさい。';
+  if (raw.contains('GPS')) return 'お店から離れすぎています。お店の近くで試してください。';
+  if (raw.contains('QR')) return 'このお店のQRコードではありません。もう一度読み取ってください。';
+  if (raw.contains('rate limit')) return '少し待ってからもう一度試してください。';
+  return '訪問確認に失敗しました。もう一度試してください。';
 }
 
 class _Centered extends StatelessWidget {
-  const _Centered({required this.icon, required this.text, this.spinner = false});
+  const _Centered({
+    required this.icon,
+    required this.text,
+    this.spinner = false,
+  });
   final IconData icon;
   final String text;
   final bool spinner;

@@ -101,14 +101,14 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     if (_titleController.text.isEmpty || _selectedCategory == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('タイトルとカテゴリを入力してけさい。')));
+      ).showSnackBar(const SnackBar(content: Text('タイトルとカテゴリを入力してください。')));
       return;
     }
 
     if (_publicImagePath == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('公開用の写真を選んでけさい。')));
+      ).showSnackBar(const SnackBar(content: Text('公開用の写真を選んでください。')));
       return;
     }
 
@@ -148,14 +148,14 @@ class _PostScreenState extends ConsumerState<PostScreen> {
           debugPrint('completeThemeVisit failed: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('カードは保存できたが、テーマ進捗の更新に失敗したよ。')),
+              const SnackBar(content: Text('カードは保存しましたが、テーマ進捗の更新に失敗しました。')),
             );
           }
         }
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('カードを作成して、テーマ進捗を更新したぞ！')));
+        ).showSnackBar(const SnackBar(content: Text('カードを作成して、テーマ進捗を更新しました！')));
         context.pop(); // 訪問フローは作成画面を閉じて戻る
         return;
       }
@@ -163,7 +163,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('カードを作成したぞ！')));
+      ).showSnackBar(const SnackBar(content: Text('カードを作成しました！')));
 
       // Reset Form（通常フロー）
       setState(() {

@@ -38,35 +38,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         appBar: AppBar(
           title: Text(
             'Shufflo',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AizuColors.textPrimary),
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w700,
+              color: AizuColors.textPrimary,
+            ),
           ),
           backgroundColor: AizuColors.kinari,
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(LucideIcons.ticket, color: AizuColors.textPrimary),
-              tooltip: 'クーポン',
-              onPressed: () => context.push('/coupons'),
-            ),
-            IconButton(
-              icon: const Icon(LucideIcons.search, color: AizuColors.textPrimary),
+              icon: const Icon(
+                LucideIcons.search,
+                color: AizuColors.textPrimary,
+              ),
               tooltip: 'ユーザーを探す',
               onPressed: () => context.push('/user_search'),
             ),
-            Consumer(builder: (context, ref, _) {
-              final unread = ref.watch(unreadCountProvider).value ?? 0;
-              return IconButton(
-                icon: Badge(
-                  isLabelVisible: unread > 0,
-                  label: Text('$unread'),
-                  child: const Icon(LucideIcons.bell, color: AizuColors.textPrimary),
-                ),
-                tooltip: '通知',
-                onPressed: () => context.push('/notifications'),
-              );
-            }),
+            Consumer(
+              builder: (context, ref, _) {
+                final unread = ref.watch(unreadCountProvider).value ?? 0;
+                return IconButton(
+                  icon: Badge(
+                    isLabelVisible: unread > 0,
+                    label: Text('$unread'),
+                    child: const Icon(
+                      LucideIcons.bell,
+                      color: AizuColors.textPrimary,
+                    ),
+                  ),
+                  tooltip: '通知',
+                  onPressed: () => context.push('/notifications'),
+                );
+              },
+            ),
             IconButton(
-              icon: const Icon(LucideIcons.settings, color: AizuColors.textPrimary),
+              icon: const Icon(
+                LucideIcons.settings,
+                color: AizuColors.textPrimary,
+              ),
               onPressed: () => context.push('/account'),
             ),
           ],
@@ -80,13 +89,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // Profile Header
                 Container(
                   color: AizuColors.kinari,
-                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 32,
+                    horizontal: 24,
+                  ),
                   child: Row(
                     children: [
                       CircleAvatar(
                         radius: 35,
                         backgroundImage: CachedNetworkImageProvider(
-                          myProfile?.displayAvatar ?? 'https://i.pravatar.cc/300',
+                          myProfile?.displayAvatar ??
+                              'https://i.pravatar.cc/300',
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -102,7 +115,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 color: AizuColors.textPrimary,
                               ),
                             ),
-                            if (myProfile?.bio != null && myProfile!.bio!.isNotEmpty) ...[
+                            if (myProfile?.bio != null &&
+                                myProfile!.bio!.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
                                 myProfile.bio!,
@@ -118,8 +132,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => _showEditProfileSheet(context, myProfile),
-                        icon: const Icon(LucideIcons.pencil, color: AizuColors.textPrimary, size: 20),
+                        onPressed: () =>
+                            _showEditProfileSheet(context, myProfile),
+                        icon: const Icon(
+                          LucideIcons.pencil,
+                          color: AizuColors.textPrimary,
+                          size: 20,
+                        ),
                         tooltip: 'プロフィール編集',
                       ),
                       IconButton(
@@ -129,7 +148,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           });
                         },
                         icon: Icon(
-                          _showStats ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                          _showStats
+                              ? LucideIcons.chevronUp
+                              : LucideIcons.chevronDown,
                           color: AizuColors.textPrimary,
                         ),
                       ),
@@ -146,15 +167,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _buildStatItem('${myProfile?.postCount ?? 0}', '投稿'),
+                              _buildStatItem(
+                                '${myProfile?.postCount ?? 0}',
+                                '投稿',
+                              ),
                               GestureDetector(
                                 onTap: () => context.push('/friends'),
-                                child: _buildStatItem('${friendsCount ?? 0}', '友達'),
+                                child: _buildStatItem(
+                                  '${friendsCount ?? 0}',
+                                  '友達',
+                                ),
                               ),
                             ],
                           ),
                         )
-                      : const SizedBox(width: double.infinity, height: 16), // 閉じている時も少しだけ余白を残す
+                      : const SizedBox(
+                          width: double.infinity,
+                          height: 16,
+                        ), // 閉じている時も少しだけ余白を残す
                 ),
                 // Tab Bar
                 Container(
@@ -164,22 +194,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     unselectedLabelColor: AizuColors.textSecondary,
                     indicatorColor: AizuColors.akabeko,
                     indicatorWeight: 2,
-                    labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+                    labelStyle: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                     tabs: const [
-                      Tab(icon: Icon(Icons.dynamic_feed, size: 20), text: 'タイムライン'),
-                      Tab(icon: Icon(LucideIcons.heart, size: 20), text: 'お気に入り'),
+                      Tab(
+                        icon: Icon(Icons.dynamic_feed, size: 20),
+                        text: 'タイムライン',
+                      ),
+                      Tab(
+                        icon: Icon(LucideIcons.heart, size: 20),
+                        text: 'お気に入り',
+                      ),
                     ],
                   ),
                 ),
                 // Tab Views
                 Expanded(
-                  child: TabBarView(
-                    children: [
-                      myId == null
-                          ? const SizedBox.shrink()
-                          : TimelineList(userId: myId),
-                      _buildFavoritesTab(),
-                    ],
+                  // 端までスクロールしたときに画面が引き伸ばされる演出（Androidのストレッチ）を無効化
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(
+                      context,
+                    ).copyWith(overscroll: false),
+                    child: TabBarView(
+                      children: [
+                        myId == null
+                            ? const SizedBox.shrink()
+                            : TimelineList(userId: myId),
+                        _buildFavoritesTab(),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -196,14 +241,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Text(
           value,
           style: GoogleFonts.outfit(
-            fontSize: 20, 
-            fontWeight: FontWeight.w700, 
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
             color: AizuColors.textPrimary,
           ),
         ),
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 12, color: AizuColors.textSecondary),
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: AizuColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -216,26 +264,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return pinnedIdsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, st) => const Center(
-        child: Text('Error loading favorites', style: TextStyle(color: Colors.red)),
+        child: Text('お気に入りを読み込めませんでした', style: TextStyle(color: Colors.red)),
       ),
       data: (pinnedIds) => cardsAsync.when(
         data: (cards) {
-          final pinnedCards = cards.where((c) => pinnedIds.contains(c.id)).toList();
+          final pinnedCards = cards
+              .where((c) => pinnedIds.contains(c.id))
+              .toList();
 
           if (pinnedCards.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.tag, size: 48, color: AizuColors.textSecondary),
+                  Icon(
+                    LucideIcons.tag,
+                    size: 48,
+                    color: AizuColors.textSecondary,
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    'No Pinned Cards Yet',
-                    style: GoogleFonts.outfit(fontSize: 18, color: AizuColors.textSecondary, fontWeight: FontWeight.w600),
+                    'お気に入りのカードはまだありません',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      color: AizuColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Pin cards from their detail screen to show them here.',
+                    'カードをお気に入りに追加すると、ここに表示されます。',
                     style: GoogleFonts.inter(color: AizuColors.textSecondary),
                   ),
                 ],
@@ -263,13 +321,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => const Center(
-          child: Text('Error loading favorites', style: TextStyle(color: Colors.red)),
+          child: Text('お気に入りを読み込めませんでした', style: TextStyle(color: Colors.red)),
         ),
       ),
     );
   }
 
-  Future<void> _showEditProfileSheet(BuildContext context, UserProfile? profile) async {
+  Future<void> _showEditProfileSheet(
+    BuildContext context,
+    UserProfile? profile,
+  ) async {
     final usernameCtrl = TextEditingController(text: profile?.username ?? '');
     final bioCtrl = TextEditingController(text: profile?.bio ?? '');
     final avatarCtrl = TextEditingController(text: profile?.avatarUrl ?? '');
@@ -285,7 +346,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Future<void> save() async {
               setSheet(() => saving = true);
               try {
-                await ref.read(socialRepositoryProvider).updateMyProfile(
+                await ref
+                    .read(socialRepositoryProvider)
+                    .updateMyProfile(
                       username: usernameCtrl.text,
                       bio: bioCtrl.text,
                       avatarUrl: avatarCtrl.text,
@@ -295,44 +358,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               } catch (_) {
                 setSheet(() => saving = false);
                 if (sheetCtx.mounted) {
-                  ScaffoldMessenger.of(sheetCtx).showSnackBar(const SnackBar(
-                      content: Text('保存に失敗しました（ユーザー名の重複などをご確認ください）')));
+                  ScaffoldMessenger.of(sheetCtx).showSnackBar(
+                    const SnackBar(
+                      content: Text('保存に失敗しました（ユーザー名の重複などをご確認ください）'),
+                    ),
+                  );
                 }
               }
             }
 
             return Padding(
               padding: EdgeInsets.only(
-                left: 20, right: 20, top: 20,
+                left: 20,
+                right: 20,
+                top: 20,
                 bottom: MediaQuery.of(c).viewInsets.bottom + 20,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('プロフィール編集',
-                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(
+                    'プロフィール編集',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   TextField(
-                      controller: usernameCtrl,
-                      decoration: const InputDecoration(labelText: 'ユーザー名')),
+                    controller: usernameCtrl,
+                    decoration: const InputDecoration(labelText: 'ユーザー名'),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
-                      controller: bioCtrl,
-                      maxLength: 140,
-                      maxLines: 3,
-                      decoration: const InputDecoration(labelText: '自己紹介（140字以内）')),
+                    controller: bioCtrl,
+                    maxLength: 140,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: '自己紹介（140字以内）',
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
-                      controller: avatarCtrl,
-                      decoration: const InputDecoration(labelText: 'アバター画像URL')),
+                    controller: avatarCtrl,
+                    decoration: const InputDecoration(labelText: 'アバター画像URL'),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: saving ? null : save,
                     child: saving
                         ? const SizedBox(
-                            height: 20, width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('保存'),
                   ),
                 ],
