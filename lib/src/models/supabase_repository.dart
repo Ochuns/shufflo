@@ -441,7 +441,7 @@ class SupabaseRepository {
           title: row['title'],
           date: DateTime.parse(row['created_at']).toLocal(),
           cards: deckCards,
-          location: 'No Location', // ハードコード
+          location: '場所未設定', // ハードコード
         );
       }).toList();
     } catch (e) {
