@@ -148,14 +148,14 @@ class _PostScreenState extends ConsumerState<PostScreen> {
           debugPrint('completeThemeVisit failed: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('カードは保存しましたが、テーマ進捗の更新に失敗しました。')),
+              const SnackBar(content: Text('カードは保存できましたが、テーマ進捗の更新に失敗しました。')),
             );
           }
         }
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('カードを作成して、テーマ進捗を更新しました！')));
+        ).showSnackBar(const SnackBar(content: Text('カードを作成し、テーマ進捗を更新しました！')));
         context.pop(); // 訪問フローは作成画面を閉じて戻る
         return;
       }
